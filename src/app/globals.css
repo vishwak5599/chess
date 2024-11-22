@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  @font-face {
+    font-family: 'MetrimLetter';
+    font-style: normal;
+    font-weight: 100;
+    font-display: swap;
+    src: url(/fonts/MetrimLetter.ttf) format('truetype');
+  }
+  @font-face {
+    font-family: 'AnticDidone';
+    font-style: normal;
+    font-size: xx-large;
+    font-weight: 10;
+    font-display: swap;
+    src: url(/fonts/AnticDidone.ttf) format('truetype');
+  }
+  @font-face {
+    font-family: 'Astrena';
+    font-style: normal;
+    font-size: large;
+    font-weight: 100;
+    font-display: swap;
+    src: url(/fonts/Astrena.ttf) format('truetype');
+  }
+
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -15,7 +42,5 @@
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
