@@ -28,12 +28,11 @@ const SelectColourPage=()=>{
         const handleResize = () => setWindowSize(window.innerWidth)
         
         window.addEventListener('resize',handleResize)
-        console.log(windowSize)
         return ()=> window.removeEventListener('resize',handleResize)
     },[window.innerWidth])
 
     const getSize = () =>{
-        return windowSize<640 ? 30 : windowSize<768 ? 36 : windowSize<1024 ? 42 : windowSize<1128 ? 50 : windowSize<1440 ? 52 : windowSize<1800 ? 54 : 54
+        return windowSize<640 ? 30 : windowSize<768 ? 34 : windowSize<1024 ? 40 : windowSize<1128 ? 46 : windowSize<1440 ? 48 : windowSize<1800 ? 52 : 52
     }
 
     const handleDropdown = () => {
@@ -117,15 +116,15 @@ const SelectColourPage=()=>{
                             <RiArrowDropRightLine color={`${timeType===1 ? "white" : "#3b82f6"}`} size={30} className="-ml-1"/>
                             <div className="flex gap-4 font-anticDidone font-bold text-white text-xl">
                                 <div className="flex flex-col justify-center items-center">
-                                    <button onClick={()=>setCustTime((prev)=>({...prev,t:prev.t+1}))}><RiArrowDropUpLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mb-2"/></button>
+                                    <button onClick={() => {setCustTime((prev) => {if(prev.t<90){return { ...prev,t:prev.t+1}}return prev})}}><RiArrowDropUpLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mb-2"/></button>
                                     <div className="flex justify-center items-center bg-gray-400 h-8 w-8 md:h-10 md:w-10 rounded-md">{custTime.t}</div>
-                                    <button onClick={()=>setCustTime((prev)=>({...prev,t:prev.t-1}))}><RiArrowDropDownLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mt-2"/></button>
+                                    <button onClick={() => {setCustTime((prev) => {if(prev.t>0){return {...prev,t:prev.t-1}}return prev})}}><RiArrowDropDownLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mt-2"/></button>
                                 </div>
                                 <div className={`flex justify-center items-center mt-6 h-14 border-2 ${timeType===1 ? "white" : "#3b82f6"} rounded-2xl mx-2`}></div>
                                 <div className="flex flex-col justify-center items-center">
-                                    <button onClick={()=>setCustTime((prev)=>({...prev,i:prev.i+1}))}><RiArrowDropUpLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mb-2"/></button>
+                                    <button onClick={() => {setCustTime((prev) => {if(prev.i<30){return { ...prev,i:prev.i+1}}return prev})}}><RiArrowDropUpLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mb-2"/></button>
                                     <div className="flex justify-center items-center bg-gray-400 h-8 w-8 md:h-10 md:w-10 rounded-md">{custTime.i}</div>
-                                    <button onClick={()=>setCustTime((prev)=>({...prev,i:prev.i-1}))}><RiArrowDropDownLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mt-2"/></button>
+                                    <button onClick={() => {setCustTime((prev) => {if(prev.i>0){return {...prev,i:prev.i-1}}return prev})}}><RiArrowDropDownLine size={40} color={`${timeType===1 ? "white" : "#3b82f6"}`} className="-mt-2"/></button>
                                 </div>
                             </div>
                         </div>

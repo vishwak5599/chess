@@ -12,12 +12,11 @@ const ChessPiece:React.FC<ChessPieceType> = ({col}) => {
         const handleResize = () => setWindowSize(window.innerWidth)
         
         window.addEventListener('resize',handleResize)
-        console.log(windowSize)
         return ()=> window.removeEventListener('resize',handleResize)
     },[window.innerWidth])
 
     const getSize = () =>{
-        return windowSize<640 ? 22 : windowSize<768 ? 26 : windowSize<1024 ? 30 : windowSize<1128 ? 34 : windowSize<1440 ? 36 : windowSize<1800 ? 40 : 42
+        return windowSize<640 ? 24 : windowSize<768 ? 26 : windowSize<1024 ? 28 : windowSize<1128 ? 34 : windowSize<1440 ? 36 : windowSize<1800 ? 40 : 42
     }
 
     return(

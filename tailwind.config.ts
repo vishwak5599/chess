@@ -15,7 +15,8 @@ export default {
       fontFamily: {
         "metrim": ["MetrimLetter","sans-serif"],
         "anticDidone": ["AnticDidone","sans-serif"],
-        "astrena": ["Astrena","sans-serif"]
+        "astrena": ["Astrena","sans-serif"],
+        "technology": ["Technology","sans-serif"]
       },
       screens: {
         xs: { max: "320px" },

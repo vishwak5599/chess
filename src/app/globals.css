@@ -26,6 +26,14 @@
     font-display: swap;
     src: url(/fonts/Astrena.ttf) format('truetype');
   }
+  @font-face {
+    font-family: 'Technology';
+    font-style: normal;
+    font-size: large;
+    font-weight: 100;
+    font-display: swap;
+    src: url(/fonts/Technology.ttf) format('truetype');
+  }
 
 }
 
