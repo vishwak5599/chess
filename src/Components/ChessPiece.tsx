@@ -7,7 +7,8 @@ type ChessPieceType = {
 const ChessPiece:React.FC<ChessPieceType> = ({col}) => {
 
     const [windowSize, setWindowSize] = useState(window.innerWidth)
-    
+
+    //update the window size if size changes
     useEffect(()=>{
         const handleResize = () => setWindowSize(window.innerWidth)
         

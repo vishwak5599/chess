@@ -21,6 +21,14 @@ type piecePositionType = {
     col : number
 }
 
+type pawnToLastSquarePosiType = {
+    piece : string | null
+    selRow : number | null
+    selCol : number | null
+    newRow : number | null
+    newCol : number | null
+}
+
 type allPossibleMovesType = {
     piece : string
     posi:{row:number,col:number}
@@ -41,6 +49,7 @@ const GamePage=()=>{
     const [curWhite,setCurWhite] = useState<piecePositionType[]>([])
     const [curBlack,setCurBlack] = useState<piecePositionType[]>([])
     const [previousMove,setPreviousMove] = useState<piecePositionType>({piece:"a",row:0,col:0})
+    const [pawnToLastSquarePosi, setPawnToLastSquarePosi] = useState<pawnToLastSquarePosiType>({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
         ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -65,6 +74,7 @@ const GamePage=()=>{
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
 
+    //function to remove enpassed pawns if enpassant move happens
     const removeEnpassedPawns = (piece:string,row:number,col:number) => {
         setBoard((prevBoard)=>{
             const newBoard = [...prevBoard]
@@ -74,21 +84,34 @@ const GamePage=()=>{
         })
     }
 
+    //function to handle if a piece is selected i.e QRNP/qrnp if a pawn reaches last square
+    const handlePawnToLastSquare = (updatedPiece:string) => {
+        if(pawnToLastSquarePosi.piece!==null && pawnToLastSquarePosi.selRow!==null && pawnToLastSquarePosi.selCol!==null && pawnToLastSquarePosi.newRow!==null && pawnToLastSquarePosi.newCol!==null) updateSelectedPiecePosition(updatedPiece,pawnToLastSquarePosi.selRow,pawnToLastSquarePosi.selCol,pawnToLastSquarePosi.newRow,pawnToLastSquarePosi.newCol)
+        setPawnToLastSquarePosi({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
+    }
+
     const updateSelectedPiecePosition = (selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number) => {
-        //remove the enpassant pawns if enpassant move happens
         if(pieceColour===1){
+            //remove the enpassant pawns if enpassant move happens
             if(selPiece==="P" && selRow===3 && selCol<7 && previousMove.piece==="p" && selCol+1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
             if(selPiece==="P" && selRow===3 && selCol>0 && previousMove.piece==="p" && selCol-1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
             if(selPiece==="p" && selRow===4 && selCol<7 && previousMove.piece==="P" && selCol+1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
             if(selPiece==="p" && selRow===4 && selCol>0 && previousMove.piece==="P" && selCol-1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
+            //if pawns moves to last square
+            if(selPiece==="P" && newRow===0) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+            if(selPiece==="p" && newRow===7) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
         }
-        else if(pieceColour===0){
+        else{
+            //remove the enpassant pawns if enpassant move happens
             if(selPiece==="P" && selRow===4 && selCol<7 && previousMove.piece==="p" && selCol+1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
             if(selPiece==="P" && selRow===4 && selCol>0 && previousMove.piece==="p" && selCol-1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
             if(selPiece==="p" && selRow===3 && selCol<7 && previousMove.piece==="P" && selCol+1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
             if(selPiece==="p" && selRow===3 && selCol>0 && previousMove.piece==="P" && selCol-1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
+            //if pawns moves to last square
+            if(selPiece==="P" && newRow===7) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+            if(selPiece==="p" && newRow===0) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
         }
-        //pawn last square ki pothe code raayi
+
         //update the selected piece position
         setBoard((prevBoard)=>{
             const newBoard = [...prevBoard]
@@ -132,6 +155,7 @@ const GamePage=()=>{
         }
     }
 
+    //Set possible moves for a selected piece
     useEffect(()=>{
         if(isSelected){
             const possibleMovesForPiece = allPossibleMoves.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
@@ -148,7 +172,7 @@ const GamePage=()=>{
         const movesArray:{row:number,col:number}[] = []
         if(pieceColour===1){
             if(row>0 && board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
-            if(row===6 && board[row-2][col]===" ") movesArray.push({row:row-2,col:col})
+            if(row===6 && board[row-2][col]===" " && board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
             if(row>0 && col>0 && blackPieces.includes(board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
             if(row>0 && col<7 && blackPieces.includes(board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
             if(row===3 && col>0 && board[row][col-1]==="p" && previousMove.piece==="p" && previousMove.row===3 && previousMove.col===col-1) movesArray.push({row:row-1,col:col-1})
@@ -156,7 +180,7 @@ const GamePage=()=>{
         }
         else{
             if(row<7 && board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
-            if(row===1 && board[row+2][col]===" ") movesArray.push({row:row+2,col:col})
+            if(row===1 && board[row+2][col]===" " && board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
             if(row<7 && col<7 && blackPieces.includes(board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
             if(row<7 && col>0 && blackPieces.includes(board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col>0 && board[row][col-1]==="p" && previousMove.piece==="p" && previousMove.row===4 && previousMove.col===col-1) movesArray.push({row:row+1,col:col-1})
@@ -171,7 +195,7 @@ const GamePage=()=>{
         const movesArray:{row:number,col:number}[] = []
         if(pieceColour===1){
             if(row<7 && board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
-            if(row===1 && board[row+2][col]===" ") movesArray.push({row:row+2,col:col})
+            if(row===1 && board[row+2][col]===" " && board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
             if(row<7 && col<7 && whitePieces.includes(board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
             if(row<7 && col>0 && whitePieces.includes(board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col>0 && board[row][col-1]==="P" && previousMove.piece==="P" && previousMove.row===4 && previousMove.col===col-1) movesArray.push({row:row+1,col:col-1})
@@ -180,7 +204,7 @@ const GamePage=()=>{
         }
         else{
             if(row>0 && board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
-            if(row===6 && board[row-2][col]===" ") movesArray.push({row:row-2,col:col})
+            if(row===6 && board[row-2][col]===" " && board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
             if(row>0 && col>0 && whitePieces.includes(board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
             if(row>0 && col<7 && whitePieces.includes(board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
             if(row===3 && col>0 && board[row][col-1]==="P" && previousMove.piece==="P" && previousMove.row===3 && previousMove.col===col-1) movesArray.push({row:row-1,col:col-1})
@@ -221,6 +245,7 @@ const GamePage=()=>{
         setAllPossibleMoves((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray}]})
     }
 
+    //function to select all the white pieces present on board
     const handleAllWhitePieces = () => {
         setCurWhite([])
         const newCurWhite:{piece:string,row:number,col:number}[] = []
@@ -234,6 +259,7 @@ const GamePage=()=>{
         setCurWhite(newCurWhite)
     }
 
+    //function to select all the black pieces present on board
     const handleAllBlackPieces = () => {
         setCurBlack([])
         const newCurBlack:{piece:string,row:number,col:number}[] = []
@@ -247,6 +273,7 @@ const GamePage=()=>{
         setCurBlack(newCurBlack)
     }
 
+    //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
         curWhite.forEach((key)=>{
             if(key.piece==="P") findMovesForP(key.row,key.col)
@@ -254,6 +281,7 @@ const GamePage=()=>{
         })
     },[curWhite])
 
+    //Now for each black piece selected find all the moves that are possible
     useEffect(()=>{
         curBlack.forEach((key)=>{
             if(key.piece==="p") findMovesForp(key.row,key.col)
@@ -261,27 +289,20 @@ const GamePage=()=>{
         })
     },[curBlack])
 
+    //based on the turn i.e white/black select all the pieces present on board respectively
     useEffect(()=>{
         setAllPossibleMoves([])
         if(pieceColour===1){
-            if(moves%2===0){
-                //ALL WHITE MOVES
-                handleAllWhitePieces()
-            }
-            else{
-                //ALL BLACK MOVES
-                handleAllBlackPieces()
-            }
+            //ALL WHITE MOVES
+            if(moves%2===0) handleAllWhitePieces()
+            //ALL BLACK MOVES
+            else handleAllBlackPieces()
         }
         else{
-            if(moves%2!==0){
-                //ALL WHITE MOVES
-                handleAllWhitePieces()
-            }
-            else{
-                //ALL BLACK MOVES
-                handleAllBlackPieces()
-            }
+            //ALL WHITE MOVES
+            if(moves%2!==0) handleAllWhitePieces()
+            //ALL BLACK MOVES
+            else handleAllBlackPieces()
         }
     },[pieceColour,moves,board])
 
@@ -291,29 +312,44 @@ const GamePage=()=>{
             <div className="flex flex-col justify-center items-center p-2">
                 <div key="sw-1" className={`${pieceColour===1 ? `${moves%2!==0 ? "bg-black" : "bg-gray-600"} text-white` : "bg-white text-black"} flex justify-center items-center ml-[40%] md:ml-[25%] mb-1 border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2 transform scale-y-[-1] scale-x-[-1]`}>
                     <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                     (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                     : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}
+                    (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
+                    : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}
                     </div>
                     <div className="w-5">{moves%2!==0 ? <FaStopwatch color={`${pieceColour===1 ? "white" : "black"}`} /> : ""}</div>
                 </div>
-                <div className="" style={{ border: "10px solid transparent",borderImage: "url('/images/woodenbg.jpg') 15 round"}}>
-                    {board.map((row,i)=>(
-                        <div key={i} className="flex justify-center">
-                            {row.map((col,j)=>(
-                                <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? "bg-blue-800" : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
-                                    onClick={()=>handleSelectedPiece(col,i,j)}
-                                >
-                                    <ChessPiece col={col} />
-                                </div>
-                            ))}
+                <div className="relative" style={{ border: "10px solid transparent",borderImage: "url('/images/woodenbg.jpg') 15 round"}}>
+                    {pawnToLastSquarePosi.piece!==null ? 
+                    <div className="absolute inset-0 flex bg-white justify-center items-center bg-opacity-60 z-80">
+                        <div className="flex flex-col justify-center items-center gap-2 lg:gap-3">
+                            <div>
+                                <div className={`border-2 ${pawnToLastSquarePosi.piece==="P" ? "border-white bg-gray-700" : "border-black bg-slate-400"} p-2 lg:p-3 rounded-md`} onClick={()=>{pawnToLastSquarePosi.piece==="P" ? handlePawnToLastSquare("Q") : handlePawnToLastSquare("q")}}>{pawnToLastSquarePosi.piece==="P" ? <ChessPiece col="Q"/> : <ChessPiece col="q"/>}</div>
+                            </div>
+                            <div className="flex gap-2">
+                                <div className={`border-2 ${pawnToLastSquarePosi.piece==="P" ? "border-white bg-gray-700" : "border-black bg-slate-400"} p-2 lg:p-3 rounded-md`} onClick={()=>{pawnToLastSquarePosi.piece==="P" ? handlePawnToLastSquare("R") : handlePawnToLastSquare("r")}}>{pawnToLastSquarePosi.piece==="P" ? <ChessPiece col="R"/> : <ChessPiece col="r"/>}</div>
+                                <div className={`border-2 ${pawnToLastSquarePosi.piece==="P" ? "border-white bg-gray-700" : "border-black bg-slate-400"} p-2 lg:p-3 rounded-md`} onClick={()=>{pawnToLastSquarePosi.piece==="P" ? handlePawnToLastSquare("N") : handlePawnToLastSquare("n")}}>{pawnToLastSquarePosi.piece==="P" ? <ChessPiece col="N"/> : <ChessPiece col="n"/>}</div>
+                                <div className={`border-2 ${pawnToLastSquarePosi.piece==="P" ? "border-white bg-gray-700" : "border-black bg-slate-400"} p-2 lg:p-3 rounded-md`} onClick={()=>{pawnToLastSquarePosi.piece==="P" ? handlePawnToLastSquare("B") : handlePawnToLastSquare("b")}}>{pawnToLastSquarePosi.piece==="P" ? <ChessPiece col="B"/> : <ChessPiece col="b"/>}</div>
+                            </div>
                         </div>
-                    ))}
+                    </div> : ""}
+                    <div>
+                        {board.map((row,i)=>(
+                            <div key={i} className="flex justify-center">
+                                {row.map((col,j)=>(
+                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? "bg-blue-800" : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
+                                        onClick={()=>handleSelectedPiece(col,i,j)}
+                                    >
+                                        <ChessPiece col={col} />
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
                 </div>
                 <div key="sw-2" className={`${pieceColour===1 ? `${moves%2===0 ? "bg-white" : "bg-slate-500"} text-black` : "bg-black text-white"} flex justify-center items-center ml-[40%] md:ml-[25%] mt-1 border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2`}>
                     <div className="w-5">{moves%2===0 ? <FaStopwatch color={`${pieceColour===1 ? "black" : "white"}`} /> : ""}</div>
                     <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                     (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                     : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}</div>
+                    (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
+                    : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}</div>
                 </div>
             </div>
         </main>
