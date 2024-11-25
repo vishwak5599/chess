@@ -413,7 +413,169 @@ const GamePage=()=>{
         if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray}]})
     }
 
+    //WHITE QUEEN MOVES
+    const findMovesForQ = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        //ROOK MOVES
+        for(let i=row+1;i<8;i++){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=row-1;i>=0;i--){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=col+1;i<8;i++){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else break
+        }
+        for(let i=col-1;i>=0;i--){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+                else if(blackPieces.includes(board[row][i])){
+                    movesArray.push({row:row,col:i})
+                    break
+                }
+                else break
+        }
 
+        //BISHOP MOVES
+        let tempCol = col
+        for(let i=row-1;i>=0 && col-1>=0;i--){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row-1;i>=0 && col+1<8;i--){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col-1>=0;i++){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col+1<8;i++){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
+    }
+
+    //BLACK QUEEN MOVES
+    const findMovesForq = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        //ROOK MOVES
+        for(let i=row+1;i<8;i++){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=row-1;i>=0;i--){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=col+1;i<8;i++){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else break
+        }
+        for(let i=col-1;i>=0;i--){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+                else if(whitePieces.includes(board[row][i])){
+                    movesArray.push({row:row,col:i})
+                    break
+                }
+                else break
+        }
+
+        //BISHOP MOVES
+        let tempCol = col
+        for(let i=row-1;i>=0 && col-1>=0;i--){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row-1;i>=0 && col+1<8;i--){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col-1>=0;i++){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col+1<8;i++){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
+    }
 
     //function to select all the white pieces present on board
     const handleAllWhitePieces = () => {
@@ -450,6 +612,7 @@ const GamePage=()=>{
             if(key.piece==="N") findMovesForN(key.row,key.col)
             if(key.piece==="R") findMovesForR(key.row,key.col)
             if(key.piece==="B") findMovesForB(key.row,key.col)
+            if(key.piece==="Q") findMovesForQ(key.row,key.col)
         })
     },[curWhite])
 
@@ -460,6 +623,7 @@ const GamePage=()=>{
             if(key.piece==="n") findMovesForn(key.row,key.col)
             if(key.piece==="r") findMovesForr(key.row,key.col)
             if(key.piece==="b") findMovesForb(key.row,key.col)
+            if(key.piece==="q") findMovesForq(key.row,key.col)
         })
     },[curBlack])
 
@@ -510,10 +674,12 @@ const GamePage=()=>{
                         {board.map((row,i)=>(
                             <div key={i} className="flex justify-center">
                                 {row.map((col,j)=>(
-                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? "bg-blue-800" : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
+                                    <div key={i+""+j} className={`${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}`}>
+                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
                                         onClick={()=>handleSelectedPiece(col,i,j)}
                                     >
                                         <ChessPiece col={col} />
+                                    </div>
                                     </div>
                                 ))}
                             </div>
