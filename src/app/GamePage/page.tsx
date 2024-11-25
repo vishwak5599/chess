@@ -137,7 +137,6 @@ const GamePage=()=>{
         else if(isSelected && selectedPiece.piece===piece && selectedPiece.row===i && selectedPiece.col===j){
             setIsSelected(false)
             setSelectedPiece({piece:null,row:null,col:null})
-            setPossibleMovesForSelectedPiece([])
         }
         //3. select if another same colour piece is selected
         else if(isSelected && ((pieceColour===1 && moves%2===0 && whitePieces.includes(board[i][j])) || (pieceColour===1 && moves%2!==0 && blackPieces.includes(board[i][j])) || (pieceColour===0 && moves%2!==0 && whitePieces.includes(board[i][j])) || (pieceColour===0 && moves%2===0 && blackPieces.includes(board[i][j])))){
