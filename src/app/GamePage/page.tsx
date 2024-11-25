@@ -45,7 +45,8 @@ const GamePage=()=>{
     const [isSelected, setIsSelected] = useState(false)
     const [selectedPiece, setSelectedPiece] = useState<selectedPieceType>({piece: null,row: null,col: null})
     const [possibleMovesForSelectedPiece, setPossibleMovesForSelectedPiece] = useState<possibleMovesForPieceType[]>([])
-    const [allPossibleMoves, setAllPossibleMoves] = useState<allPossibleMovesType[]>([])
+    const [allPossibleMovesForWhite, setAllPossibleMovesForWhite] = useState<allPossibleMovesType[]>([])
+    const [allPossibleMovesForBlack, setAllPossibleMovesForBlack] = useState<allPossibleMovesType[]>([])
     const [curWhite,setCurWhite] = useState<piecePositionType[]>([])
     const [curBlack,setCurBlack] = useState<piecePositionType[]>([])
     const [previousMove,setPreviousMove] = useState<piecePositionType>({piece:"a",row:0,col:0})
@@ -148,23 +149,20 @@ const GamePage=()=>{
             setPossibleMovesForSelectedPiece([])
             setMoves((prev)=>prev+1)
         }
-        console.log(previousMove)
     }
 
     //Set possible moves for a selected piece
     useEffect(()=>{
         if(isSelected){
-            const possibleMovesForPiece = allPossibleMoves.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
-            if(possibleMovesForPiece) setPossibleMovesForSelectedPiece(possibleMovesForPiece?.moves)
+            const possibleMovesForPieceIfWhite = allPossibleMovesForWhite.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
+            const possibleMovesForPieceIfBlack = allPossibleMovesForBlack.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
+            if(possibleMovesForPieceIfWhite) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfWhite?.moves)
+            else if(possibleMovesForPieceIfBlack) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfBlack?.moves)
         }
         else{
             setPossibleMovesForSelectedPiece([])
         }
     },[isSelected,selectedPiece])
-
-    useEffect(()=>{
-        console.log(allPossibleMoves)
-    },[allPossibleMoves])
 
     //WHITE PAWN MOVES
     //1.one move 2.two moves 3&4.attack diagonally 5&6.enpassant move
@@ -186,7 +184,7 @@ const GamePage=()=>{
             if(row===4 && col>0 && board[row][col-1]==="p" && previousMove.piece==="p" && previousMove.row===4 && previousMove.col===col-1) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col<7 && board[row][col+1]==="p" && previousMove.piece==="p" && previousMove.row===4 && previousMove.col===col+1) movesArray.push({row:row+1,col:col+1})
         }
-        setAllPossibleMoves((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
+        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //BLACK PAWN MOVES
@@ -210,7 +208,7 @@ const GamePage=()=>{
             if(row===3 && col>0 && board[row][col-1]==="P" && previousMove.piece==="P" && previousMove.row===3 && previousMove.col===col-1) movesArray.push({row:row-1,col:col-1})
             if(row===3 && col<7 && board[row][col+1]==="P" && previousMove.piece==="P" && previousMove.row===3 && previousMove.col===col+1) movesArray.push({row:row-1,col:col+1})
         }
-        setAllPossibleMoves((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
+        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //WHITE KNIGHT MOVES
@@ -226,7 +224,7 @@ const GamePage=()=>{
         if(row-1>=0 && col-2>=0 && !whitePieces.includes(board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
         if(row+1<8 && col+2<8 && !whitePieces.includes(board[row+1][col+2])) movesArray.push({row:row+1,col:col+2})
         if(row+1<8 && col-2>=0 && !whitePieces.includes(board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
-        setAllPossibleMoves((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray}]})
+        if(movesArray.length>0) setAllPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK KNIGHT MOVES
@@ -242,7 +240,7 @@ const GamePage=()=>{
         if(row+1<8 && col-2>=0 && !blackPieces.includes(board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
         if(row-1>=0 && col+2<8 && !blackPieces.includes(board[row-1][col+2])) movesArray.push({row:row-1,col:col+2})
         if(row-1>=0 && col-2>=0 && !blackPieces.includes(board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
-        setAllPossibleMoves((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray}]})
+        if(movesArray.length>0) setAllPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //WHITE ROOK MOVES
@@ -280,7 +278,7 @@ const GamePage=()=>{
                 }
                 else break
         }
-        setAllPossibleMoves((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
+        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK ROOK MOVES
@@ -318,8 +316,104 @@ const GamePage=()=>{
                 }
                 else break
         }
-        setAllPossibleMoves((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
+        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
     }
+
+    //WHITE BISHOP MOVES
+    const findMovesForB = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        let tempCol = col
+        for(let i=row-1;i>=0 && col-1>=0;i--){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row-1;i>=0 && col+1<8;i--){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col-1>=0;i++){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col+1<8;i++){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray}]})
+    }
+
+    //BLACK BISHOP MOVES
+    const findMovesForb = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        let tempCol = col
+        for(let i=row-1;i>=0 && col-1>=0;i--){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row-1;i>=0 && col+1<8;i--){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col-1>=0;i++){
+            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(board[i][col-1])){
+                movesArray.push({row:i,col:col-1})
+                break
+            }
+            else break
+            col-=1
+        }
+        col=tempCol
+        for(let i=row+1;i<8 && col+1<8;i++){
+            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(board[i][col+1])){
+                movesArray.push({row:i,col:col+1})
+                break
+            }
+            else break
+            col+=1
+        }
+        col=tempCol
+        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray}]})
+    }
+
+
 
     //function to select all the white pieces present on board
     const handleAllWhitePieces = () => {
@@ -355,6 +449,7 @@ const GamePage=()=>{
             if(key.piece==="P") findMovesForP(key.row,key.col)
             if(key.piece==="N") findMovesForN(key.row,key.col)
             if(key.piece==="R") findMovesForR(key.row,key.col)
+            if(key.piece==="B") findMovesForB(key.row,key.col)
         })
     },[curWhite])
 
@@ -364,12 +459,14 @@ const GamePage=()=>{
             if(key.piece==="p") findMovesForp(key.row,key.col)
             if(key.piece==="n") findMovesForn(key.row,key.col)
             if(key.piece==="r") findMovesForr(key.row,key.col)
+            if(key.piece==="b") findMovesForb(key.row,key.col)
         })
     },[curBlack])
 
     //based on the turn i.e white/black select all the pieces present on board respectively
     useEffect(()=>{
-        setAllPossibleMoves([])
+        setAllPossibleMovesForWhite([])
+        setAllPossibleMovesForBlack([])
         if(pieceColour===1){
             //ALL WHITE MOVES
             if(moves%2===0) handleAllWhitePieces()
