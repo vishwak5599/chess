@@ -93,20 +93,16 @@ const GamePage=()=>{
     const updateSelectedPiecePosition = (selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number) => {
         if(pieceColour===1){
             //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===3 && selCol<7 && previousMove.piece==="p" && selCol+1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
-            if(selPiece==="P" && selRow===3 && selCol>0 && previousMove.piece==="p" && selCol-1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
-            if(selPiece==="p" && selRow===4 && selCol<7 && previousMove.piece==="P" && selCol+1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
-            if(selPiece==="p" && selRow===4 && selCol>0 && previousMove.piece==="P" && selCol-1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
+            if(selPiece==="P" && selRow===3 && previousMove.piece==="p" && newRow===2 && newCol===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
+            if(selPiece==="p" && selRow===4 && previousMove.piece==="P" && newRow===5 && newCol===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
             //if pawns moves to last square
             if(selPiece==="P" && newRow===0) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
             if(selPiece==="p" && newRow===7) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
         }
         else{
             //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===4 && selCol<7 && previousMove.piece==="p" && selCol+1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
-            if(selPiece==="P" && selRow===4 && selCol>0 && previousMove.piece==="p" && selCol-1===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
-            if(selPiece==="p" && selRow===3 && selCol<7 && previousMove.piece==="P" && selCol+1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
-            if(selPiece==="p" && selRow===3 && selCol>0 && previousMove.piece==="P" && selCol-1===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
+            if(selPiece==="P" && selRow===4 && previousMove.piece==="p" && newRow===5 && newCol===previousMove.col) removeEnpassedPawns("p",previousMove.row,previousMove.col)
+            if(selPiece==="p" && selRow===3 && previousMove.piece==="P" && newRow===2 && newCol===previousMove.col) removeEnpassedPawns("P",previousMove.row,previousMove.col)
             //if pawns moves to last square
             if(selPiece==="P" && newRow===7) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
             if(selPiece==="p" && newRow===0) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
@@ -152,6 +148,7 @@ const GamePage=()=>{
             setPossibleMovesForSelectedPiece([])
             setMoves((prev)=>prev+1)
         }
+        console.log(previousMove)
     }
 
     //Set possible moves for a selected piece
@@ -164,6 +161,10 @@ const GamePage=()=>{
             setPossibleMovesForSelectedPiece([])
         }
     },[isSelected,selectedPiece])
+
+    useEffect(()=>{
+        console.log(allPossibleMoves)
+    },[allPossibleMoves])
 
     //WHITE PAWN MOVES
     //1.one move 2.two moves 3&4.attack diagonally 5&6.enpassant move
@@ -198,7 +199,7 @@ const GamePage=()=>{
             if(row<7 && col<7 && whitePieces.includes(board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
             if(row<7 && col>0 && whitePieces.includes(board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col>0 && board[row][col-1]==="P" && previousMove.piece==="P" && previousMove.row===4 && previousMove.col===col-1) movesArray.push({row:row+1,col:col-1})
-            if(row===4 && col<7 && board[row][col+1]==="P" && previousMove.piece==="p" && previousMove.row===4 && previousMove.col===col+1) movesArray.push({row:row+1,col:col+1})
+            if(row===4 && col<7 && board[row][col+1]==="P" && previousMove.piece==="P" && previousMove.row===4 && previousMove.col===col+1) movesArray.push({row:row+1,col:col+1})
             
         }
         else{
@@ -244,6 +245,82 @@ const GamePage=()=>{
         setAllPossibleMoves((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray}]})
     }
 
+    //WHITE ROOK MOVES
+    const findMovesForR = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        for(let i=row+1;i<8;i++){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=row-1;i>=0;i--){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=col+1;i<8;i++){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else break
+        }
+        for(let i=col-1;i>=0;i--){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+                else if(blackPieces.includes(board[row][i])){
+                    movesArray.push({row:row,col:i})
+                    break
+                }
+                else break
+        }
+        setAllPossibleMoves((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
+    }
+
+    //BLACK ROOK MOVES
+    const findMovesForr = (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        for(let i=row+1;i<8;i++){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=row-1;i>=0;i--){
+            if(board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(board[i][col])){
+                movesArray.push({row:i,col:col})
+                break
+            }
+            else break
+        }
+        for(let i=col+1;i<8;i++){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else break
+        }
+        for(let i=col-1;i>=0;i--){
+            if(board[row][i]===" ") movesArray.push({row:row,col:i})
+                else if(whitePieces.includes(board[row][i])){
+                    movesArray.push({row:row,col:i})
+                    break
+                }
+                else break
+        }
+        setAllPossibleMoves((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
+    }
+
     //function to select all the white pieces present on board
     const handleAllWhitePieces = () => {
         setCurWhite([])
@@ -277,6 +354,7 @@ const GamePage=()=>{
         curWhite.forEach((key)=>{
             if(key.piece==="P") findMovesForP(key.row,key.col)
             if(key.piece==="N") findMovesForN(key.row,key.col)
+            if(key.piece==="R") findMovesForR(key.row,key.col)
         })
     },[curWhite])
 
@@ -285,6 +363,7 @@ const GamePage=()=>{
         curBlack.forEach((key)=>{
             if(key.piece==="p") findMovesForp(key.row,key.col)
             if(key.piece==="n") findMovesForn(key.row,key.col)
+            if(key.piece==="r") findMovesForr(key.row,key.col)
         })
     },[curBlack])
 
@@ -303,7 +382,7 @@ const GamePage=()=>{
             //ALL BLACK MOVES
             else handleAllBlackPieces()
         }
-    },[pieceColour,moves,board])
+    },[pieceColour,moves])
 
 
     return(
