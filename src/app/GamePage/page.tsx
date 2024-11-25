@@ -2,7 +2,8 @@
 import ChessPiece from "@/Components/ChessPiece"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { FaStopwatch } from "react-icons/fa6";
+import { FaStopwatch } from "react-icons/fa6"
+import { MdSkipPrevious } from "react-icons/md"
 
 type selectedPieceType = {
     piece : string | null
@@ -50,7 +51,10 @@ const GamePage=()=>{
     const [curWhite,setCurWhite] = useState<piecePositionType[]>([])
     const [curBlack,setCurBlack] = useState<piecePositionType[]>([])
     const [previousMove,setPreviousMove] = useState<piecePositionType>({piece:"a",row:0,col:0})
+    const [topPlayerChoosePrev, setTopPlayerChoosePrev] = useState(false)
+    const [botPlayerChoosePrev, setBotPlayerChoosePrev] = useState(false)
     const [pawnToLastSquarePosi, setPawnToLastSquarePosi] = useState<pawnToLastSquarePosiType>({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
+
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
         ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -72,8 +76,27 @@ const GamePage=()=>{
         ['r', 'n', 'b', 'k', 'q', 'b', 'n', 'r']
       ]
     )
+    const [previousBoardPosi, setPreviousBoardPosi] = useState<[string[][],string[][]]>([[],board])
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
+
+    //function to go to previous move if player approves
+    const handlePlayerChoosePrev = (ifApproves:boolean) => {
+        if(ifApproves){
+            if((pieceColour===1 && moves%2!==0 && botPlayerChoosePrev) || (pieceColour===1 && moves%2===0 && topPlayerChoosePrev) || (pieceColour===0 && moves%2===0 && botPlayerChoosePrev) || (pieceColour===0 && moves%2!==0 && topPlayerChoosePrev)){
+                setBoard(previousBoardPosi[1])
+                setPreviousBoardPosi([[],previousBoardPosi[0]])
+                setMoves((prev)=>prev-1)
+            }
+            else{
+                setBoard(previousBoardPosi[0])
+                setPreviousBoardPosi([[],[]])
+                setMoves((prev)=>prev-2)
+            }
+        }
+        setTopPlayerChoosePrev(false)
+        setBotPlayerChoosePrev(false)
+    }
 
     //function to remove enpassed pawns if enpassant move happens
     const removeEnpassedPawns = (piece:string,row:number,col:number) => {
@@ -143,6 +166,9 @@ const GamePage=()=>{
         }
         //4. update
         else if (isSelected && selectedPiece.piece!==null && selectedPiece.row!==null && selectedPiece.col!==null && possibleMovesForSelectedPiece.some((m)=>m.row===i && m.col===j)) {
+            if(JSON.stringify(previousBoardPosi[0]) === JSON.stringify([]) && JSON.stringify(previousBoardPosi[1]) === JSON.stringify([])) setPreviousBoardPosi([[],board])
+            else setPreviousBoardPosi([previousBoardPosi[1],board])
+
             updateSelectedPiecePosition(selectedPiece.piece, selectedPiece.row, selectedPiece.col, i, j)
             setIsSelected(false)
             setSelectedPiece({piece:null,row:null,col:null})
@@ -649,12 +675,15 @@ const GamePage=()=>{
     return(
         <main className="h-full w-full">
             <div className="flex flex-col justify-center items-center p-2">
-                <div key="sw-1" className={`${pieceColour===1 ? `${moves%2!==0 ? "bg-black" : "bg-gray-600"} text-white` : "bg-white text-black"} flex justify-center items-center ml-[40%] md:ml-[25%] mb-1 border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2 transform scale-y-[-1] scale-x-[-1]`}>
-                    <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                    (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                    : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}
+                <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
+                    {JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([]) ? <div className="border-2 border-blue-500 rounded-md bg-white transform scale-y-[-1] scale-x-[-1]" onClick={()=>setTopPlayerChoosePrev(true)}><MdSkipPrevious color="#3b82f6" size={30} /></div> : <div className="w-8"></div>}
+                    <div key="sw-1" className={`${pieceColour===1 ? `${moves%2!==0 ? "bg-black" : "bg-gray-600"} text-white` : "bg-white text-black"} flex justify-center items-center border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2 transform scale-y-[-1] scale-x-[-1]`}>
+                        <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
+                        (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
+                        : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}
+                        </div>
+                        <div className="w-5">{moves%2!==0 ? <FaStopwatch color={`${pieceColour===1 ? "white" : "black"}`} /> : ""}</div>
                     </div>
-                    <div className="w-5">{moves%2!==0 ? <FaStopwatch color={`${pieceColour===1 ? "white" : "black"}`} /> : ""}</div>
                 </div>
                 <div className="relative" style={{ border: "10px solid transparent",borderImage: "url('/images/woodenbg.jpg') 15 round"}}>
                     {pawnToLastSquarePosi.piece!==null ? 
@@ -669,13 +698,23 @@ const GamePage=()=>{
                                 <div className={`border-2 ${pawnToLastSquarePosi.piece==="P" ? "border-white bg-gray-700" : "border-black bg-slate-400"} p-2 lg:p-3 rounded-md`} onClick={()=>{pawnToLastSquarePosi.piece==="P" ? handlePawnToLastSquare("B") : handlePawnToLastSquare("b")}}>{pawnToLastSquarePosi.piece==="P" ? <ChessPiece col="B"/> : <ChessPiece col="b"/>}</div>
                             </div>
                         </div>
-                    </div> : ""}
+                    </div> : (topPlayerChoosePrev || botPlayerChoosePrev) ?
+                    <div className={`absolute inset-0 flex flex-col font-anticDidone bg-white justify-center items-center bg-opacity-60 gap-4 z-80 ${botPlayerChoosePrev ? "transform scale-x-[-1] scale-y-[-1]" : ""}`}>
+                        <div className="bg-white p-4 rounded-lg">
+                            <div className="text-blue-500 font-bold text-sm md:text-lg lg:text-xl">YOUR OPPONENT WANTS TO UNDO THE MOVE</div>
+                            <div className="flex justify-center items-center gap-4">
+                                <button className="border-2 border-green-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(true)}>YES</button>
+                                <button className="border-2 border-red-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(false)}>NO</button>
+                            </div>
+                        </div>
+                    </div> : ""
+                    }
                     <div>
                         {board.map((row,i)=>(
                             <div key={i} className="flex justify-center">
                                 {row.map((col,j)=>(
                                     <div key={i+""+j} className={`${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}`}>
-                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
+                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-2 md:border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
                                         onClick={()=>handleSelectedPiece(col,i,j)}
                                     >
                                         <ChessPiece col={col} />
@@ -686,11 +725,14 @@ const GamePage=()=>{
                         ))}
                     </div>
                 </div>
-                <div key="sw-2" className={`${pieceColour===1 ? `${moves%2===0 ? "bg-white" : "bg-slate-500"} text-black` : "bg-black text-white"} flex justify-center items-center ml-[40%] md:ml-[25%] mt-1 border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2`}>
-                    <div className="w-5">{moves%2===0 ? <FaStopwatch color={`${pieceColour===1 ? "black" : "white"}`} /> : ""}</div>
-                    <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                    (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                    : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}</div>
+                <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mt-1">
+                    {(JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([])) ? <div className="border-2 border-blue-500 rounded-md bg-white"><MdSkipPrevious color="#3b82f6" size={30} onClick={()=>setBotPlayerChoosePrev(true)}/></div> : <div className="w-8"></div>}
+                    <div key="sw-2" className={`${pieceColour===1 ? `${moves%2===0 ? "bg-white" : "bg-slate-500"} text-black` : "bg-black text-white"} flex justify-center items-center border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2`}>
+                        <div className="w-5">{moves%2===0 ? <FaStopwatch color={`${pieceColour===1 ? "black" : "white"}`} /> : ""}</div>
+                        <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
+                        (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
+                        : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}</div>
+                    </div>
                 </div>
             </div>
         </main>
