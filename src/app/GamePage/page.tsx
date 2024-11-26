@@ -180,10 +180,14 @@ const GamePage=()=>{
     //Set possible moves for a selected piece
     useEffect(()=>{
         if(isSelected){
-            const possibleMovesForPieceIfWhite = allPossibleMovesForWhite.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
-            const possibleMovesForPieceIfBlack = allPossibleMovesForBlack.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
-            if(possibleMovesForPieceIfWhite) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfWhite?.moves)
-            else if(possibleMovesForPieceIfBlack) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfBlack?.moves)
+            if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+                const possibleMovesForPieceIfWhite = allPossibleMovesForWhite.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
+                if(possibleMovesForPieceIfWhite) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfWhite?.moves)
+            }
+            else{
+                const possibleMovesForPieceIfBlack = allPossibleMovesForBlack.find((item)=>(item.piece===selectedPiece.piece && item.posi.row===selectedPiece.row && item.posi.col===selectedPiece.col))
+                if(possibleMovesForPieceIfBlack) setPossibleMovesForSelectedPiece(possibleMovesForPieceIfBlack?.moves)
+            }
         }
         else{
             setPossibleMovesForSelectedPiece([])
@@ -657,17 +661,17 @@ const GamePage=()=>{
     useEffect(()=>{
         setAllPossibleMovesForWhite([])
         setAllPossibleMovesForBlack([])
-        if(pieceColour===1){
-            //ALL WHITE MOVES
-            if(moves%2===0) handleAllWhitePieces()
+        if((pieceColour===1 && moves%2===0) ||(pieceColour===0 && moves%2!==0)){
             //ALL BLACK MOVES
-            else handleAllBlackPieces()
+            handleAllBlackPieces()
+            //ALL WHITE MOVES
+            handleAllWhitePieces()
         }
         else{
             //ALL WHITE MOVES
-            if(moves%2!==0) handleAllWhitePieces()
+            handleAllWhitePieces()
             //ALL BLACK MOVES
-            else handleAllBlackPieces()
+            handleAllBlackPieces()
         }
     },[pieceColour,moves])
 
