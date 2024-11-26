@@ -632,21 +632,21 @@ const GamePage=()=>{
     // Function to select all the white pieces present on the board
     const handleAllWhitePieces = useCallback(() => {
         setCurWhite([])
-        const newCurWhite: { piece: string; row: number; col: number }[] = [];
+        const newCurWhite: { piece: string; row: number; col: number }[] = []
         board.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (whitePieces.includes(y)) {
-                    newCurWhite.push({ piece: y, row: i, col: j });
+                    newCurWhite.push({ piece: y, row: i, col: j })
                 }
             });
         });
-        setCurWhite(newCurWhite);
-    }, [board]);
+        setCurWhite(newCurWhite)
+    }, [board])
 
     // Function to select all the black pieces present on the board
     const handleAllBlackPieces = useCallback(() => {
         setCurBlack([])
-        const newCurBlack: { piece: string; row: number; col: number }[] = [];
+        const newCurBlack: { piece: string; row: number; col: number }[] = []
         board.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (blackPieces.includes(y)) {
@@ -654,8 +654,8 @@ const GamePage=()=>{
                 }
             });
         });
-        setCurBlack(newCurBlack);
-    }, [board]);
+        setCurBlack(newCurBlack)
+    }, [board])
 
     // Based on the turn, i.e., white/black, calculate the moves in the respective order
     useEffect(() => {
@@ -669,7 +669,7 @@ const GamePage=()=>{
                     handleAllBlackPieces()
                     resolve()
                 })
-                handleAllWhitePieces(); // After black pieces, handle white pieces
+                handleAllWhitePieces()
             } else {
                 // If it is black turn, handle white pieces first, then black
                 await new Promise<void>((resolve) => {
