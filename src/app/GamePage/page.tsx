@@ -81,9 +81,9 @@ const GamePage=()=>{
     const blackPieces = ["r","n","b","q","k","p"]
 
     //function to go to previous move if player approves
-    const handlePlayerChoosePrev = (ifApproves:boolean) => {
+    const handlePlayerChoosePrev = (ifApproves:boolean,whoChoose:string) => {
         if(ifApproves){
-            if((pieceColour===1 && moves%2!==0 && botPlayerChoosePrev) || (pieceColour===1 && moves%2===0 && topPlayerChoosePrev) || (pieceColour===0 && moves%2===0 && botPlayerChoosePrev) || (pieceColour===0 && moves%2!==0 && topPlayerChoosePrev)){
+            if((pieceColour===1 && whoChoose==="w" && botPlayerChoosePrev && moves%2!==0) || (pieceColour===1 && whoChoose==="b" && topPlayerChoosePrev && moves%2===0) || (pieceColour===0 && whoChoose==="w" && topPlayerChoosePrev && moves%2===0) || (pieceColour===0 && whoChoose==="b" && botPlayerChoosePrev && moves%2!==0)){
                 setBoard(previousBoardPosi[1])
                 setPreviousBoardPosi([[],previousBoardPosi[0]])
                 setPreviousMove([{piece:"a",row:0,col:0},previousMove[0],previousMove[1]])
@@ -610,6 +610,50 @@ const GamePage=()=>{
         if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
     }
 
+    //WHITE KING MOVES 
+    const findMovesForK= (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        if(row-1>=0 && (board[row-1][col]===" " || blackPieces.includes(board[row-1][col]))) movesArray.push({row:row-1,col:col})
+        if(row+1<8 && (board[row+1][col]===" " || blackPieces.includes(board[row+1][col]))) movesArray.push({row:row+1,col:col})
+        if(col-1>=0 && (board[row][col-1]===" " || blackPieces.includes(board[row][col-1]))) movesArray.push({row:row,col:col-1})
+        if(col+1<8 && (board[row][col+1]===" " || blackPieces.includes(board[row][col+1]))) movesArray.push({row:row,col:col+1})
+
+        if(row-1>=0 && col-1>=0 && (board[row-1][col-1]===" " || blackPieces.includes(board[row-1][col-1]))) movesArray.push({row:row-1,col:col-1})
+        if(row-1>=0 && col+1<8 && (board[row-1][col+1]===" " || blackPieces.includes(board[row-1][col+1]))) movesArray.push({row:row-1,col:col+1})
+        if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || blackPieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
+        if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || blackPieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
+        
+        const filterMovesArray = movesArray.filter((moves)=>{
+            !allPossibleMovesForBlack.find((exmove)=>{
+                exmove.moves.includes({row:moves.row,col:moves.col})
+            })
+        })
+        
+        if(filterMovesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:filterMovesArray}]})
+    }
+
+    //BLACK KING MOVES 
+    const findMovesFork= (row:number, col:number) => {
+        const movesArray:{row:number,col:number}[] = []
+        if(row-1>=0 && (board[row-1][col]===" " || whitePieces.includes(board[row-1][col]))) movesArray.push({row:row-1,col:col})
+        if(row+1<8 && (board[row+1][col]===" " || whitePieces.includes(board[row+1][col]))) movesArray.push({row:row+1,col:col})
+        if(col-1>=0 && (board[row][col-1]===" " || whitePieces.includes(board[row][col-1]))) movesArray.push({row:row,col:col-1})
+        if(col+1<8 && (board[row][col+1]===" " || whitePieces.includes(board[row][col+1]))) movesArray.push({row:row,col:col+1})
+
+        if(row-1>=0 && col-1>=0 && (board[row-1][col-1]===" " || whitePieces.includes(board[row-1][col-1]))) movesArray.push({row:row-1,col:col-1})
+        if(row-1>=0 && col+1<8 && (board[row-1][col+1]===" " || whitePieces.includes(board[row-1][col+1]))) movesArray.push({row:row-1,col:col+1})
+        if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || whitePieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
+        if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || whitePieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
+        
+        const filterMovesArray = movesArray.filter((moves)=>{
+            !allPossibleMovesForWhite.find((exmove)=>{
+                exmove.moves.includes({row:moves.row,col:moves.col})
+            })
+        })
+        
+        if(filterMovesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:filterMovesArray}]})
+    }
+
     //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
         curWhite.forEach((key)=>{
@@ -618,7 +662,7 @@ const GamePage=()=>{
             if(key.piece==="R") findMovesForR(key.row,key.col)
             if(key.piece==="B") findMovesForB(key.row,key.col)
             if(key.piece==="Q") findMovesForQ(key.row,key.col)
-            
+            if(key.piece==="K") findMovesForK(key.row,key.col)
         })
     },[curWhite])
 
@@ -630,6 +674,7 @@ const GamePage=()=>{
             if(key.piece==="r") findMovesForr(key.row,key.col)
             if(key.piece==="b") findMovesForb(key.row,key.col)
             if(key.piece==="q") findMovesForq(key.row,key.col)
+            if(key.piece==="k") findMovesFork(key.row,key.col)
         })
     },[curBlack])
 
@@ -718,8 +763,8 @@ const GamePage=()=>{
                         <div className="bg-white p-4 rounded-lg">
                             <div className="text-blue-500 font-bold text-sm md:text-lg lg:text-xl">YOUR OPPONENT WANTS TO UNDO THE MOVE</div>
                             <div className="flex justify-center items-center gap-4">
-                                <button className="border-2 border-green-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(true)}>YES</button>
-                                <button className="border-2 border-red-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(false)}>NO</button>
+                                <button className="border-2 border-green-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(true,((pieceColour===1 && topPlayerChoosePrev) || (pieceColour===0 && botPlayerChoosePrev)) ? "b" : "w")}>YES</button>
+                                <button className="border-2 border-red-600 bg-white md:text-lg lg:text-xl rounded-md p-1" onClick={()=>handlePlayerChoosePrev(false,((pieceColour===1 && topPlayerChoosePrev) || (pieceColour===0 && botPlayerChoosePrev)) ? "b" : "w")}>NO</button>
                             </div>
                         </div>
                     </div> : ""
