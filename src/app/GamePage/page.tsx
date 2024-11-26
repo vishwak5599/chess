@@ -1,7 +1,7 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 
@@ -607,34 +607,6 @@ const GamePage=()=>{
         if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
     }
 
-    //function to select all the white pieces present on board
-    const handleAllWhitePieces = () => {
-        setCurWhite([])
-        const newCurWhite:{piece:string,row:number,col:number}[] = []
-        board.forEach((x,i)=>{
-            x.forEach((y,j)=>{
-                if(whitePieces.includes(y)){
-                    newCurWhite.push({piece:y,row:i,col:j})
-                }
-            })
-        })
-        setCurWhite(newCurWhite)
-    }
-
-    //function to select all the black pieces present on board
-    const handleAllBlackPieces = () => {
-        setCurBlack([])
-        const newCurBlack:{piece:string,row:number,col:number}[] = []
-        board.forEach((x,i)=>{
-            x.forEach((y,j)=>{
-                if(blackPieces.includes(y)){
-                    newCurBlack.push({piece:y,row:i,col:j})
-                }
-            })
-        })
-        setCurBlack(newCurBlack)
-    }
-
     //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
         curWhite.forEach((key)=>{
@@ -657,23 +629,59 @@ const GamePage=()=>{
         })
     },[curBlack])
 
-    //based on the turn i.e white/black select all the pieces present on board respectively
-    useEffect(()=>{
+    // Function to select all the white pieces present on the board
+    const handleAllWhitePieces = useCallback(() => {
+        setCurWhite([])
+        const newCurWhite: { piece: string; row: number; col: number }[] = [];
+        board.forEach((x, i) => {
+            x.forEach((y, j) => {
+                if (whitePieces.includes(y)) {
+                    newCurWhite.push({ piece: y, row: i, col: j });
+                }
+            });
+        });
+        setCurWhite(newCurWhite);
+    }, [board]);
+
+    // Function to select all the black pieces present on the board
+    const handleAllBlackPieces = useCallback(() => {
+        setCurBlack([])
+        const newCurBlack: { piece: string; row: number; col: number }[] = [];
+        board.forEach((x, i) => {
+            x.forEach((y, j) => {
+                if (blackPieces.includes(y)) {
+                    newCurBlack.push({ piece: y, row: i, col: j });
+                }
+            });
+        });
+        setCurBlack(newCurBlack);
+    }, [board]);
+
+    // Based on the turn, i.e., white/black, calculate the moves in the respective order
+    useEffect(() => {
         setAllPossibleMovesForWhite([])
         setAllPossibleMovesForBlack([])
-        if((pieceColour===1 && moves%2===0) ||(pieceColour===0 && moves%2!==0)){
-            //ALL BLACK MOVES
-            handleAllBlackPieces()
-            //ALL WHITE MOVES
-            handleAllWhitePieces()
+
+        const handlePiecesSequentially = async () => {
+            if ((pieceColour === 1 && moves % 2 === 0) || (pieceColour === 0 && moves % 2 !== 0)) {
+                // If it is white turn, handle black pieces first, then white
+                await new Promise<void>((resolve) => {
+                    handleAllBlackPieces()
+                    resolve()
+                })
+                handleAllWhitePieces(); // After black pieces, handle white pieces
+            } else {
+                // If it is black turn, handle white pieces first, then black
+                await new Promise<void>((resolve) => {
+                    handleAllWhitePieces()
+                    resolve()
+                })
+                handleAllBlackPieces()
+            }
         }
-        else{
-            //ALL WHITE MOVES
-            handleAllWhitePieces()
-            //ALL BLACK MOVES
-            handleAllBlackPieces()
-        }
-    },[pieceColour,moves])
+
+        handlePiecesSequentially()
+    }, [pieceColour, moves, handleAllBlackPieces, handleAllWhitePieces])
 
 
     return(
