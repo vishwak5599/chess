@@ -216,7 +216,7 @@ const GamePage=()=>{
             if(row===4 && col>0 && board[row][col-1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===4 && previousMove[2].col===col-1) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col<7 && board[row][col+1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===4 && previousMove[2].col===col+1) movesArray.push({row:row+1,col:col+1})
         }
-        if(movesArray.length>0){setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])}
+        setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //BLACK PAWN MOVES
@@ -240,7 +240,7 @@ const GamePage=()=>{
             if(row===3 && col>0 && board[row][col-1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===3 && previousMove[2].col===col-1) movesArray.push({row:row-1,col:col-1})
             if(row===3 && col<7 && board[row][col+1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===3 && previousMove[2].col===col+1) movesArray.push({row:row-1,col:col+1})
         }
-        if(movesArray.length>0){setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])}
+        setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //WHITE KNIGHT MOVES
@@ -525,6 +525,7 @@ const GamePage=()=>{
         }
         col=tempCol
         if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
+        setWhiteComp(true)
     }
 
     //BLACK QUEEN MOVES
@@ -608,7 +609,106 @@ const GamePage=()=>{
         }
         col=tempCol
         if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
+        setBlackComp(true)
     }
+
+    //oka piece nko piece ni protect chesetapud king ah piece ni champaledu code raayi 
+    //allMovesForWhite array lone nkoo array tesko prathi piece ki protected ani dantlo ah piece eh pieces in protect chestundo add chey
+    const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
+        const removeMoves:{ row: number; col: number }[] = []
+        const filteredMovesArray = movesArray.filter((move) => {
+            return !allPossibleMovesForBlack.some((expiece) => {
+                if (expiece.piece === "p") {
+                    if (pieceColour === 1) {
+                        return (
+                            (expiece.posi.row + 1 === move.row && expiece.posi.col + 1 === move.col) ||
+                            (expiece.posi.row + 1 === move.row && expiece.posi.col - 1 === move.col)
+                        )
+                    } else {
+                        return (
+                            (expiece.posi.row - 1 === move.row && expiece.posi.col + 1 === move.col) ||
+                            (expiece.posi.row - 1 === move.row && expiece.posi.col - 1 === move.col)
+                        )
+                    }
+                }
+                else if(expiece.piece==="r"){
+                    const isSameRow = expiece.posi.row===row
+                    const isSameCol = expiece.posi.col===col
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameRow){
+                        if(col<expiece.posi.col) removeMoves.push({row:row,col:col-1})
+                        else removeMoves.push({row:row,col:col+1})
+                    }
+                    if(ifAttacked && isSameCol){
+                        if(expiece.posi.row<row) removeMoves.push({row:row+1,col:col})
+                        else removeMoves.push({row:row-1,col:col})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else if(expiece.piece==="b"){
+                    const isSameLeftDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col<col) || (expiece.posi.row>row && expiece.posi.col>col))
+                    const isSameRightDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col>col) || (expiece.posi.row>row && expiece.posi.col<col))
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameLeftDiag){
+                        if(expiece.posi.row<row && expiece.posi.col<col) removeMoves.push({row:row+1,col:col+1})
+                        else removeMoves.push({row:row-1,col:col-1})
+                    }
+                    if(ifAttacked && isSameRightDiag){
+                        if(expiece.posi.row<row && expiece.posi.col>col) removeMoves.push({row:row+1,col:col-1})
+                        else removeMoves.push({row:row-1,col:col+1})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else if(expiece.piece==="q"){
+                    const isSameRow = expiece.posi.row===row
+                    const isSameCol = expiece.posi.col===col
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameRow){
+                        if(col<expiece.posi.col) removeMoves.push({row:row,col:col-1})
+                        else removeMoves.push({row:row,col:col+1})
+                    }
+                    if(ifAttacked && isSameCol){
+                        if(expiece.posi.row<row) removeMoves.push({row:row+1,col:col})
+                        else removeMoves.push({row:row-1,col:col})
+                    }
+
+                    const isSameLeftDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col<col) || (expiece.posi.row>row && expiece.posi.col>col))
+                    const isSameRightDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col>col) || (expiece.posi.row>row && expiece.posi.col<col))
+                    
+                    if(ifAttacked && isSameLeftDiag){
+                        if(expiece.posi.row<row && expiece.posi.col<col) removeMoves.push({row:row+1,col:col+1})
+                        else removeMoves.push({row:row-1,col:col-1})
+                    }
+                    if(ifAttacked && isSameRightDiag){
+                        if(expiece.posi.row<row && expiece.posi.col>col) removeMoves.push({row:row+1,col:col-1})
+                        else removeMoves.push({row:row-1,col:col+1})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else {
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+            })
+        })
+        
+        const newFilteredMovesArray = filteredMovesArray.filter((move)=>{return !(removeMoves.some((rMove)=>rMove.row===move.row && rMove.col===move.col))})
+        return newFilteredMovesArray
+    }
+    
 
     //WHITE KING MOVES 
     const findMovesForK= (row:number, col:number) => {
@@ -623,13 +723,110 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || blackPieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || blackPieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
         
-        const filterMovesArray = movesArray.filter((moves)=>{
-            !allPossibleMovesForBlack.find((exmove)=>{
-                exmove.moves.includes({row:moves.row,col:moves.col})
+        const filteredMovesArray = filterMovesForWhiteKing(row,col,movesArray)
+
+        if(filteredMovesArray.length>0){
+            if(allPossibleMovesForWhite.some((piece)=>piece.piece==="K")){
+                setAllPossibleMovesForWhite((prev)=>{return prev.map((piece) => { return piece.piece === "K" ? { piece: "K", posi: { row: row, col: col }, moves: filteredMovesArray } : piece })})
+            }
+            else{
+                setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:filteredMovesArray}]})
+            }
+        }
+    }
+
+    const filterMovesForBlackKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
+        const removeMoves:{ row: number; col: number }[] = []
+        const filteredMovesArray = movesArray.filter((move) => {
+            return !allPossibleMovesForWhite.some((expiece) => {
+                if (expiece.piece === "P") {
+                    if (pieceColour === 1) {
+                        return (
+                            (expiece.posi.row - 1 === move.row && expiece.posi.col + 1 === move.col) ||
+                            (expiece.posi.row - 1 === move.row && expiece.posi.col - 1 === move.col)
+                        )
+                    } else {
+                        return (
+                            (expiece.posi.row + 1 === move.row && expiece.posi.col + 1 === move.col) ||
+                            (expiece.posi.row + 1 === move.row && expiece.posi.col - 1 === move.col)
+                        )
+                    }
+                } 
+                else if(expiece.piece==="R"){
+                    const isSameRow = expiece.posi.row===row
+                    const isSameCol = expiece.posi.col===col
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameRow){
+                        if(col<expiece.posi.col) removeMoves.push({row:row,col:col-1})
+                        else removeMoves.push({row:row,col:col+1})
+                    }
+                    if(ifAttacked && isSameCol){
+                        if(expiece.posi.row<row) removeMoves.push({row:row+1,col:col})
+                        else removeMoves.push({row:row-1,col:col})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else if(expiece.piece==="B"){
+                    const isSameLeftDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col<col) || (expiece.posi.row>row && expiece.posi.col>col))
+                    const isSameRightDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col>col) || (expiece.posi.row>row && expiece.posi.col<col))
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameLeftDiag){
+                        if(expiece.posi.row<row && expiece.posi.col<col) removeMoves.push({row:row+1,col:col+1})
+                        else removeMoves.push({row:row-1,col:col-1})
+                    }
+                    if(ifAttacked && isSameRightDiag){
+                        if(expiece.posi.row<row && expiece.posi.col>col) removeMoves.push({row:row+1,col:col-1})
+                        else removeMoves.push({row:row-1,col:col+1})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else if(expiece.piece==="Q"){
+                    const isSameRow = expiece.posi.row===row
+                    const isSameCol = expiece.posi.col===col
+                    const ifAttacked = expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                    if(ifAttacked && isSameRow){
+                        if(col<expiece.posi.col) removeMoves.push({row:row,col:col-1})
+                        else removeMoves.push({row:row,col:col+1})
+                    }
+                    if(ifAttacked && isSameCol){
+                        if(expiece.posi.row<row) removeMoves.push({row:row+1,col:col})
+                        else removeMoves.push({row:row-1,col:col})
+                    }
+
+                    const isSameLeftDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col<col) || (expiece.posi.row>row && expiece.posi.col>col))
+                    const isSameRightDiag = expiece.posi.row-row===expiece.posi.col-col && ((expiece.posi.row<row && expiece.posi.col>col) || (expiece.posi.row>row && expiece.posi.col<col))
+                    
+                    if(ifAttacked && isSameLeftDiag){
+                        if(expiece.posi.row<row && expiece.posi.col<col) removeMoves.push({row:row+1,col:col+1})
+                        else removeMoves.push({row:row-1,col:col-1})
+                    }
+                    if(ifAttacked && isSameRightDiag){
+                        if(expiece.posi.row<row && expiece.posi.col>col) removeMoves.push({row:row+1,col:col-1})
+                        else removeMoves.push({row:row-1,col:col+1})
+                    }
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
+                else {
+                    return expiece.moves.some(
+                        (exmove) => exmove.row === move.row && exmove.col === move.col
+                    )
+                }
             })
         })
-        
-        if(filterMovesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:filterMovesArray}]})
+        const newFilteredMovesArray = filteredMovesArray.filter((move)=>{return !(removeMoves.some((rMove)=>rMove.row===move.row && rMove.col===move.col))})
+        return newFilteredMovesArray
     }
 
     //BLACK KING MOVES 
@@ -645,14 +842,20 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || whitePieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || whitePieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
         
-        const filterMovesArray = movesArray.filter((moves)=>{
-            !allPossibleMovesForWhite.find((exmove)=>{
-                exmove.moves.includes({row:moves.row,col:moves.col})
-            })
-        })
+        const filteredMovesArray = filterMovesForBlackKing(row,col,movesArray)
         
-        if(filterMovesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:filterMovesArray}]})
+        if(filteredMovesArray.length>0){
+            if(allPossibleMovesForBlack.some((piece)=>piece.piece==="k")){
+                setAllPossibleMovesForBlack((prev)=>{return prev.map((piece) => { return piece.piece === "k" ? { piece: "k", posi: { row: row, col: col }, moves: filteredMovesArray } : piece })})
+            }
+            else{
+                setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:filteredMovesArray}]})
+            }
+        }
     }
+
+    const [whiteComp,setWhiteComp] = useState(false)
+    const [blackComp, setBlackComp] = useState(false)
 
     //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
@@ -663,6 +866,7 @@ const GamePage=()=>{
             if(key.piece==="B") findMovesForB(key.row,key.col)
             if(key.piece==="Q") findMovesForQ(key.row,key.col)
             if(key.piece==="K") findMovesForK(key.row,key.col)
+
         })
     },[curWhite])
 
@@ -678,8 +882,30 @@ const GamePage=()=>{
         })
     },[curBlack])
 
+    useEffect(()=>{
+        if(blackComp && ((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0))){
+            curWhite.some((piece)=>{
+                if(piece.piece==="K"){
+                    findMovesForK(piece.row,piece.col)
+                }
+            })
+        }
+        setBlackComp(false)
+    },[pieceColour,moves,blackComp])
+
+    useEffect(()=>{
+        if(whiteComp && ((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0))){
+            curBlack.some((piece)=>{
+                if(piece.piece==="k"){
+                    findMovesFork(piece.row,piece.col)
+                }
+            })
+        }
+        setWhiteComp(false)
+    },[pieceColour,moves,whiteComp])
+
     // Function to select all the white pieces present on the board
-    const handleAllWhitePieces = useCallback(() => {
+    const handleAllWhitePieces = () => {
         setCurWhite([])
         const newCurWhite: { piece: string; row: number; col: number }[] = []
         board.forEach((x, i) => {
@@ -690,10 +916,10 @@ const GamePage=()=>{
             });
         });
         setCurWhite(newCurWhite)
-    }, [board])
+    }
 
     // Function to select all the black pieces present on the board
-    const handleAllBlackPieces = useCallback(() => {
+    const handleAllBlackPieces = () => {
         setCurBlack([])
         const newCurBlack: { piece: string; row: number; col: number }[] = []
         board.forEach((x, i) => {
@@ -704,33 +930,23 @@ const GamePage=()=>{
             });
         });
         setCurBlack(newCurBlack)
-    }, [board])
+    }
 
     // Based on the turn, i.e., white/black, calculate the moves in the respective order
     useEffect(() => {
         setAllPossibleMovesForWhite([])
         setAllPossibleMovesForBlack([])
 
-        const handlePiecesSequentially = async () => {
             if ((pieceColour === 1 && moves % 2 === 0) || (pieceColour === 0 && moves % 2 !== 0)) {
-                // If it is white turn, handle black pieces first, then white
-                await new Promise<void>((resolve) => {
-                    handleAllBlackPieces()
-                    resolve()
-                })
+                // If it is white turn, handle black pieces first, then 
+                handleAllBlackPieces()
                 handleAllWhitePieces()
             } else {
                 // If it is black turn, handle white pieces first, then black
-                await new Promise<void>((resolve) => {
-                    handleAllWhitePieces()
-                    resolve()
-                })
+                handleAllWhitePieces()
                 handleAllBlackPieces()
             }
-        }
-
-        handlePiecesSequentially()
-    }, [pieceColour, moves, handleAllBlackPieces, handleAllWhitePieces])
+    },[pieceColour,moves])
 
     return(
         <main className="h-full w-full">
