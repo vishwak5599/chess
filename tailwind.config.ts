@@ -8,6 +8,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontSize: {
+        'xxxs': '0.425rem',
+        'xxs': '0.625rem',
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
