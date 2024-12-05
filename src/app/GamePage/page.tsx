@@ -34,6 +34,21 @@ type allPossibleMovesType = {
     piece : string
     posi:{row:number,col:number}
     moves:{row:number,col:number}[]
+    protected:{row:number,col:number}[]
+}
+
+type allTempPossibleMovesType = {
+    piece : string
+    posi:{row:number,col:number}
+    moves:{row:number,col:number}[]
+}
+
+type moveType = {
+    piece : string
+    fromRow : number
+    fromCol : number
+    toRow : number
+    toCol : number
 }
 
 const GamePage=()=>{
@@ -50,10 +65,16 @@ const GamePage=()=>{
     const [allPossibleMovesForBlack, setAllPossibleMovesForBlack] = useState<allPossibleMovesType[]>([])
     const [curWhite,setCurWhite] = useState<piecePositionType[]>([])
     const [curBlack,setCurBlack] = useState<piecePositionType[]>([])
-    const [previousMove,setPreviousMove] = useState<[piecePositionType,piecePositionType,piecePositionType]>([{piece:"a",row:0,col:0},{piece:"a",row:0,col:0},{piece:"a",row:0,col:0}])
     const [topPlayerChoosePrev, setTopPlayerChoosePrev] = useState(false)
     const [botPlayerChoosePrev, setBotPlayerChoosePrev] = useState(false)
     const [pawnToLastSquarePosi, setPawnToLastSquarePosi] = useState<pawnToLastSquarePosiType>({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
+    const [whiteKingCastlePossible,setWhiteKingCastlePossible] = useState(true)
+    const [blackKingCastlePossible,setBlackKingCastlePossible] = useState(true)
+    const [whiteRookCastlePossible,setWhiteRookCastlePossible] = useState({left:true,right:true})
+    const [blackRookCastlePossible,setBlackRookCastlePossible] = useState({left:true,right:true})
+    const [allMoves, setAllMoves] = useState<moveType[]>([])
+    const [allTempPossibleMovesForWhite, setAllTempPossibleMovesForWhite] = useState<allTempPossibleMovesType[]>([])
+    const [allTempPossibleMovesForBlack, setAllTempPossibleMovesForBlack] = useState<allTempPossibleMovesType[]>([])
 
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -64,8 +85,8 @@ const GamePage=()=>{
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
         ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-      ] :
-      [
+    ] :
+    [
         ['R', 'N', 'B', 'K', 'Q', 'B', 'N', 'R'],
         ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -74,11 +95,143 @@ const GamePage=()=>{
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
         ['r', 'n', 'b', 'k', 'q', 'b', 'n', 'r']
-      ]
+    ]
     )
     const [previousBoardPosi, setPreviousBoardPosi] = useState<[string[][],string[][]]>([[],board])
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
+
+    //function to find if White King is in threat
+    const findThreatToWhiteKing = (custBoard:string[][]) => {
+        let row=0,col=0
+        custBoard.forEach((r,i)=>{
+            r.forEach((c,j)=>{
+                if(c==="K"){
+                    row=i
+                    col=j
+                }
+            })
+        })
+        return allPossibleMovesForBlack.some((piece)=>{
+            piece.moves.some((move)=>{
+                move.row===row && move.col===col
+            })
+        })
+    }
+
+    //function to find if Black King is in threat
+    const findThreatToBlackKing = (custBoard:string[][]) => {
+        let row=0,col=0
+        custBoard.forEach((r,i)=>{
+            r.forEach((c,j)=>{
+                if(c==="k"){
+                    row=i
+                    col=j
+                }
+            })
+        })
+        return allPossibleMovesForWhite.some((piece)=>{
+            piece.moves.some((move)=>{
+                move.row===row && move.col===col
+            })
+        })
+    }
+
+    //function to check if there is any square attacked in between king and rook before castling
+    const checkMiddleSquaresAttacked = (colour:string, side:string) => {
+        if(pieceColour===1){
+            if(colour==="white"){
+                if(side==="left"){
+                    if(board[7][1]===" " && board[7][2]===" " && board[7][3]===" "){
+                        return allPossibleMovesForBlack.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 7 && move.col===1) || (move.row===7 && move.col===2) || (move.row===7 && move.col===3)
+                            })
+                        })
+                    }
+                    else return true
+                }
+                else{
+                    if(board[7][5]===" " && board[7][6]===" "){
+                        return allPossibleMovesForBlack.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 7 && move.col===5) || (move.row===7 && move.col===6)
+                            })
+                        })
+                    }
+                    else return true
+                }
+            }
+            else{
+                if(side==="left"){
+                    if(board[0][1]===" " && board[0][2]===" " && board[0][3]===" "){
+                        return allPossibleMovesForWhite.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 0 && move.col===1) || (move.row===0 && move.col===2) || (move.row===0 && move.col===3)
+                            })
+                        })
+                    }
+                    else return true
+                }
+                else{
+                    if(board[0][5]===" " && board[0][6]===" "){
+                        return allPossibleMovesForWhite.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 0 && move.col===5) || (move.row===0 && move.col===6)
+                            })
+                        })
+                    }
+                    else return true
+                }
+            }
+        }
+        else{
+            if(colour==="white"){
+                if(side==="left"){
+                    if(board[0][1]===" " && board[0][2]===" " && board[0][3]===" "){
+                        return allPossibleMovesForBlack.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 0 && move.col===1) || (move.row===0 && move.col===2) || (move.row===0 && move.col===3)
+                            })
+                        })
+                    }
+                    else return true
+                }
+                else{
+                    if(board[0][5]===" " && board[0][6]===" "){
+                        return allPossibleMovesForBlack.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 0 && move.col===5) || (move.row===0 && move.col===6)
+                            })
+                        })
+                    }
+                    else return true
+                }
+            }
+            else{
+                if(side==="left"){
+                    if(board[7][1]===" " && board[7][2]===" " && board[7][3]===" "){
+                        return allPossibleMovesForWhite.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 7 && move.col===1) || (move.row===7 && move.col===2) || (move.row===7 && move.col===3)
+                            })
+                        })
+                    }
+                    else return true
+                }
+                else{
+                    if(board[7][5]===" " && board[7][6]===" "){
+                        return allPossibleMovesForWhite.some((piece)=>{
+                            piece.moves.some((move)=>{
+                                (move.row=== 7 && move.col===5) || (move.row===7 && move.col===6)
+                            })
+                        })
+                    }
+                    else return true
+                }
+            }
+        }
+    }
 
     //function to go to previous move if player approves
     const handlePlayerChoosePrev = (ifApproves:boolean,whoChoose:string) => {
@@ -86,13 +239,58 @@ const GamePage=()=>{
             if((pieceColour===1 && whoChoose==="w" && botPlayerChoosePrev && moves%2!==0) || (pieceColour===1 && whoChoose==="b" && topPlayerChoosePrev && moves%2===0) || (pieceColour===0 && whoChoose==="w" && topPlayerChoosePrev && moves%2===0) || (pieceColour===0 && whoChoose==="b" && botPlayerChoosePrev && moves%2!==0)){
                 setBoard(previousBoardPosi[1])
                 setPreviousBoardPosi([[],previousBoardPosi[0]])
-                setPreviousMove([{piece:"a",row:0,col:0},previousMove[0],previousMove[1]])
+
+                //check if the king is moved in previous move and it is the first time king moved set that the castling is possible if move is taken back
+                if(allMoves[allMoves.length-1].piece==="K" && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="K")) setWhiteKingCastlePossible(true)
+                if(allMoves[allMoves.length-1].piece==="k" && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="k")) setBlackKingCastlePossible(true)
+                    
+                //check if the rook is moved in previous move and it is the first time rook moved set that the castling is possible if move is taken back
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(allMoves.length>0) setAllMoves((prev)=>prev.slice(0,allMoves.length-1))
                 setMoves((prev)=>prev-1)
             }
             else{
                 setBoard(previousBoardPosi[0])
                 setPreviousBoardPosi([[],[]])
-                setPreviousMove([{piece:"a",row:0,col:0},{piece:"a",row:0,col:0},previousMove[0]])
+
+                //check if the king is moved in previous move and it is the first time king moved set that the castling is possible if move is taken back
+                if(allMoves[allMoves.length-2].piece==="K" && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="K")) setWhiteKingCastlePossible(true)
+                if(allMoves[allMoves.length-2].piece==="k" && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="k")) setBlackKingCastlePossible(true)
+                
+                if(allMoves[allMoves.length-1].piece==="K" && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="K")) setWhiteKingCastlePossible(true)
+                if(allMoves[allMoves.length-1].piece==="k" && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="k")) setBlackKingCastlePossible(true)
+                    
+                //check if the rook is moved in previous move and it is the first time rook moved set that the castling is possible if move is taken back
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="R" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===0 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===0 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-1].piece==="r" && allMoves[allMoves.length-1].fromRow===7 && allMoves[allMoves.length-1].fromCol===7 && !allMoves.slice(0,allMoves.length-1).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(pieceColour===1 && allMoves[allMoves.length-2].piece==="R" && allMoves[allMoves.length-2].fromRow===7 && allMoves[allMoves.length-2].fromCol===0 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-2].piece==="R" && allMoves[allMoves.length-2].fromRow===7 && allMoves[allMoves.length-2].fromCol===7 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="R" && move.fromRow===7 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-2].piece==="R" && allMoves[allMoves.length-2].fromRow===0 && allMoves[allMoves.length-2].fromCol===0 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===0)) setWhiteRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-2].piece==="R" && allMoves[allMoves.length-2].fromRow===0 && allMoves[allMoves.length-2].fromCol===7 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="R" && move.fromRow===0 && move.fromCol===7)) setWhiteRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(pieceColour===1 && allMoves[allMoves.length-2].piece==="r" && allMoves[allMoves.length-2].fromRow===0 && allMoves[allMoves.length-2].fromCol===0 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===1 && allMoves[allMoves.length-2].piece==="r" && allMoves[allMoves.length-2].fromRow===0 && allMoves[allMoves.length-2].fromCol===7 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="r" && move.fromRow===7 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-2].piece==="r" && allMoves[allMoves.length-2].fromRow===7 && allMoves[allMoves.length-2].fromCol===0 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===0)) setBlackRookCastlePossible((prev)=>({...prev,left:true}))
+                if(pieceColour===0 && allMoves[allMoves.length-2].piece==="r" && allMoves[allMoves.length-2].fromRow===7 && allMoves[allMoves.length-2].fromCol===7 && !allMoves.slice(0,allMoves.length-2).some((move)=>move.piece==="r" && move.fromRow===0 && move.fromCol===7)) setBlackRookCastlePossible((prev)=>({...prev,right:true}))
+
+                if(allMoves.length>1) setAllMoves((prev)=>prev.slice(0,allMoves.length-2))
                 setMoves((prev)=>prev-2)
             }
         }
@@ -116,23 +314,89 @@ const GamePage=()=>{
         setPawnToLastSquarePosi({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
     }
 
+    const handleRookPosiAfterCastling = (row:number, prevCol:number, newCol:number) => {
+        setBoard((prevBoard)=>{
+            const newBoard = [...prevBoard]
+            newBoard[row] = [...prevBoard[row]]
+            const piece = newBoard[row][prevCol]
+            newBoard[row][prevCol] = " "
+            newBoard[row][newCol] = piece
+            return newBoard
+        })
+    }
+
     const updateSelectedPiecePosition = (selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number) => {
         if(pieceColour===1){
             //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===3 && previousMove[2].piece==="p" && newRow===2 && newCol===previousMove[2].col && previousMove[2].row===3) removeEnpassedPawns("p",previousMove[2].row,previousMove[2].col)
-            if(selPiece==="p" && selRow===4 && previousMove[2].piece==="P" && newRow===5 && newCol===previousMove[2].col && previousMove[2].row===4) removeEnpassedPawns("P",previousMove[2].row,previousMove[2].col)
+            if(selPiece==="P" && selRow===3 && allMoves[allMoves.length-1].piece==="p" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+            if(selPiece==="p" && selRow===4 && allMoves[allMoves.length-1].piece==="P" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
             //if pawns moves to last square
             if(selPiece==="P" && newRow===0) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
             if(selPiece==="p" && newRow===7) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+
+            //set that the castling is not possible if the rook is moved
+            if(selPiece==="R" && selRow===7 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
+            if(selPiece==="R" && selRow===7 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
+            if(selPiece==="r" && selRow===0 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
+            if(selPiece==="r" && selRow===0 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
+
+            //set that the castling is not possible if the king is moved                
+            if(selPiece==="K" && selRow===7 && selCol===4){
+                if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===7 && newCol===2){
+                    handleRookPosiAfterCastling(7,0,3)
+                }
+                if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===7 && newCol===6){
+                    handleRookPosiAfterCastling(7,7,5)
+                }
+                setWhiteKingCastlePossible(false)
+            }
+            if(selPiece==="k" && selRow===0 && selCol===4){
+                if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===0 && newCol===2){
+                    handleRookPosiAfterCastling(0,0,3)
+                }
+                if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===0 && newCol===6){
+                    handleRookPosiAfterCastling(0,7,5)
+                }
+                setBlackKingCastlePossible(false)
+            }
         }
         else{
             //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===4 && previousMove[2].piece==="p" && newRow===5 && newCol===previousMove[2].col && previousMove[2].row===4) removeEnpassedPawns("p",previousMove[2].row,previousMove[2].col)
-            if(selPiece==="p" && selRow===3 && previousMove[2].piece==="P" && newRow===2 && newCol===previousMove[2].col && previousMove[2].row===3) removeEnpassedPawns("P",previousMove[2].row,previousMove[2].col)
+            if(selPiece==="P" && selRow===4 && allMoves[allMoves.length-1].piece==="p" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+            if(selPiece==="p" && selRow===3 && allMoves[allMoves.length-1].piece==="P" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
             //if pawns moves to last square
             if(selPiece==="P" && newRow===7) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
             if(selPiece==="p" && newRow===0) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+
+            //set that the castling is not possible if the rook is moved
+            if(selPiece==="R" && selRow===0 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
+            if(selPiece==="R" && selRow===0 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
+            if(selPiece==="r" && selRow===7 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
+            if(selPiece==="r" && selRow===7 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
+
+            //set that the castling is not possible if the king is moved
+            if(selPiece==="K" && selRow===0 && selCol===4){
+                if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===0 && newCol===2){
+                    handleRookPosiAfterCastling(0,0,3)
+                }
+                if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===0 && newCol===6){
+                    handleRookPosiAfterCastling(0,7,5)
+                }
+                setWhiteKingCastlePossible(false)
+            }
+            if(selPiece==="k" && selRow===7 && selCol===4){
+                if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===7 && newCol===2){
+                    handleRookPosiAfterCastling(7,0,3)
+                }
+                if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===7 && newCol===6){
+                    handleRookPosiAfterCastling(7,7,5)
+                }
+                setBlackKingCastlePossible(false)
+            }
         }
+
+        //**set all the previous moves**
+        setAllMoves((prev)=>{return [...prev,{piece:selPiece,fromRow:selRow,fromCol:selCol,toRow:newRow,toCol:newCol}]})
 
         //update the selected piece position
         setBoard((prevBoard)=>{
@@ -143,7 +407,6 @@ const GamePage=()=>{
             newBoard[newRow][newCol] = selPiece
             return newBoard
         })
-        setPreviousMove([previousMove[1],previousMove[2],{piece:selPiece,row:newRow,col:newCol}])
     }
 
     const handleSelectedPiece = (piece:string,i:number,j:number) => {
@@ -197,168 +460,273 @@ const GamePage=()=>{
     },[isSelected,selectedPiece])
 
     //WHITE PAWN MOVES
-    //1.one move 2.two moves 3&4.attack diagonally 5&6.enpassant move
-    const findMovesForP = (row:number, col:number) => {
+    //1.one move 2.two moves 3&4.attack diagonally 6&7.if pawn protects any piece 9&10.enpassant move
+    const findMovesForP = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         if(pieceColour===1){
-            if(row>0 && board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
-            if(row===6 && board[row-2][col]===" " && board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
-            if(row>0 && col>0 && blackPieces.includes(board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
-            if(row>0 && col<7 && blackPieces.includes(board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
-            if(row===3 && col>0 && board[row][col-1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===3 && previousMove[2].col===col-1) movesArray.push({row:row-1,col:col-1})
-            if(row===3 && col<7 && board[row][col+1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===3 && previousMove[2].col===col+1) movesArray.push({row:row-1,col:col+1})
+            if(row>0 && Board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
+            if(row===6 && Board[row-2][col]===" " && Board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
+            if(row>0 && col>0 && blackPieces.includes(Board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
+            if(row>0 && col<7 && blackPieces.includes(Board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
+            if(forRealBoard){
+                if(row>0 && col>0 && whitePieces.includes(Board[row-1][col-1])) protectedArray.push({row:row-1,col:col-1})
+                if(row>0 && col<7 && whitePieces.includes(Board[row-1][col+1])) protectedArray.push({row:row-1,col:col+1})
+            }
+            if(row===3 && col>0 && Board[row][col-1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row-1,col:col-1})
+            if(row===3 && col<7 && Board[row][col+1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row-1,col:col+1})
         }
         else{
-            if(row<7 && board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
-            if(row===1 && board[row+2][col]===" " && board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
-            if(row<7 && col<7 && blackPieces.includes(board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
-            if(row<7 && col>0 && blackPieces.includes(board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
-            if(row===4 && col>0 && board[row][col-1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===4 && previousMove[2].col===col-1) movesArray.push({row:row+1,col:col-1})
-            if(row===4 && col<7 && board[row][col+1]==="p" && previousMove[2].piece==="p" && previousMove[2].row===4 && previousMove[2].col===col+1) movesArray.push({row:row+1,col:col+1})
+            if(row<7 && Board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
+            if(row===1 && Board[row+2][col]===" " && Board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
+            if(row<7 && col<7 && blackPieces.includes(Board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
+            if(row<7 && col>0 && blackPieces.includes(Board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
+            if(forRealBoard){
+                if(row<7 && col<7 && whitePieces.includes(Board[row+1][col+1])) protectedArray.push({row:row+1,col:col+1})
+                if(row<7 && col>0 && whitePieces.includes(Board[row+1][col-1])) protectedArray.push({row:row+1,col:col-1})
+            }
+            if(row===4 && col>0 && Board[row][col-1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row+1,col:col-1})
+            if(row===4 && col<7 && Board[row][col+1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row+1,col:col+1})
         }
-        setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
+        if(forRealBoard) setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}])
+        else setAllTempPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //BLACK PAWN MOVES
-    //1.one move 2.two moves 3&4.attack diagonally 5&6.enpassant move
-    const findMovesForp = (row:number, col:number) => {
+    //1.one move 2.two moves 3&4.attack diagonally 6&7.if pawn protects any piece 9&10.enpassant move
+    const findMovesForp = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         if(pieceColour===1){
-            if(row<7 && board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
-            if(row===1 && board[row+2][col]===" " && board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
-            if(row<7 && col<7 && whitePieces.includes(board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
-            if(row<7 && col>0 && whitePieces.includes(board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
-            if(row===4 && col>0 && board[row][col-1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===4 && previousMove[2].col===col-1) movesArray.push({row:row+1,col:col-1})
-            if(row===4 && col<7 && board[row][col+1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===4 && previousMove[2].col===col+1) movesArray.push({row:row+1,col:col+1})
+            if(row<7 && Board[row+1][col]===" ") movesArray.push({row:row+1,col:col})
+            if(row===1 && Board[row+2][col]===" " && Board[row+1][col]===" ") movesArray.push({row:row+2,col:col})
+            if(row<7 && col<7 && whitePieces.includes(Board[row+1][col+1])) movesArray.push({row:row+1,col:col+1})
+            if(row<7 && col>0 && whitePieces.includes(Board[row+1][col-1])) movesArray.push({row:row+1,col:col-1})
+            if(forRealBoard){
+                if(row<7 && col<7 && blackPieces.includes(Board[row+1][col+1])) protectedArray.push({row:row+1,col:col+1})
+                if(row<7 && col>0 && blackPieces.includes(Board[row+1][col-1])) protectedArray.push({row:row+1,col:col-1})
+            }
+            if(row===4 && col>0 && Board[row][col-1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row+1,col:col-1})
+            if(row===4 && col<7 && Board[row][col+1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row+1,col:col+1})
             
         }
         else{
-            if(row>0 && board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
-            if(row===6 && board[row-2][col]===" " && board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
-            if(row>0 && col>0 && whitePieces.includes(board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
-            if(row>0 && col<7 && whitePieces.includes(board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
-            if(row===3 && col>0 && board[row][col-1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===3 && previousMove[2].col===col-1) movesArray.push({row:row-1,col:col-1})
-            if(row===3 && col<7 && board[row][col+1]==="P" && previousMove[2].piece==="P" && previousMove[2].row===3 && previousMove[2].col===col+1) movesArray.push({row:row-1,col:col+1})
+            if(row>0 && Board[row-1][col]===" ") movesArray.push({row:row-1,col:col})
+            if(row===6 && Board[row-2][col]===" " && Board[row-1][col]===" ") movesArray.push({row:row-2,col:col})
+            if(row>0 && col>0 && whitePieces.includes(Board[row-1][col-1])) movesArray.push({row:row-1,col:col-1})
+            if(row>0 && col<7 && whitePieces.includes(Board[row-1][col+1])) movesArray.push({row:row-1,col:col+1})
+            if(forRealBoard){
+                if(row>0 && col>0 && blackPieces.includes(Board[row-1][col-1])) protectedArray.push({row:row-1,col:col-1})
+                if(row>0 && col<7 && blackPieces.includes(Board[row-1][col+1])) protectedArray.push({row:row-1,col:col+1})
+            }
+            if(row===3 && col>0 && Board[row][col-1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row-1,col:col-1})
+            if(row===3 && col<7 && Board[row][col+1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row-1,col:col+1})
         }
-        setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
+        if(forRealBoard) setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}])
+        else setAllTempPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
     }
 
     //WHITE KNIGHT MOVES
-    const findMovesForN = (row:number, col:number) => {
+    const findMovesForN = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         //BIG L
-        if(row-2>=0 && col+1<8 && !whitePieces.includes(board[row-2][col+1])) movesArray.push({row:row-2,col:col+1})
-        if(row-2>=0 && col-1>=0 && !whitePieces.includes(board[row-2][col-1])) movesArray.push({row:row-2,col:col-1})
-        if(row+2<8 && col+1<8 && !whitePieces.includes(board[row+2][col+1])) movesArray.push({row:row+2,col:col+1})
-        if(row+2<8 && col-1>=0 && !whitePieces.includes(board[row+2][col-1])) movesArray.push({row:row+2,col:col-1})
+        if(row-2>=0 && col+1<8 && !whitePieces.includes(Board[row-2][col+1])) movesArray.push({row:row-2,col:col+1})
+        if(row-2>=0 && col-1>=0 && !whitePieces.includes(Board[row-2][col-1])) movesArray.push({row:row-2,col:col-1})
+        if(row+2<8 && col+1<8 && !whitePieces.includes(Board[row+2][col+1])) movesArray.push({row:row+2,col:col+1})
+        if(row+2<8 && col-1>=0 && !whitePieces.includes(Board[row+2][col-1])) movesArray.push({row:row+2,col:col-1})
+        
+        if(forRealBoard){
+            if(row-2>=0 && col+1<8 && whitePieces.includes(Board[row-2][col+1])) protectedArray.push({row:row-2,col:col+1})
+            if(row-2>=0 && col-1>=0 && whitePieces.includes(Board[row-2][col-1])) protectedArray.push({row:row-2,col:col-1})
+            if(row+2<8 && col+1<8 && whitePieces.includes(Board[row+2][col+1])) protectedArray.push({row:row+2,col:col+1})
+            if(row+2<8 && col-1>=0 && whitePieces.includes(Board[row+2][col-1])) protectedArray.push({row:row+2,col:col-1})
+        }
+
         //SMALL L
-        if(row-1>=0 && col+2<8 && !whitePieces.includes(board[row-1][col+2])) movesArray.push({row:row-1,col:col+2})
-        if(row-1>=0 && col-2>=0 && !whitePieces.includes(board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
-        if(row+1<8 && col+2<8 && !whitePieces.includes(board[row+1][col+2])) movesArray.push({row:row+1,col:col+2})
-        if(row+1<8 && col-2>=0 && !whitePieces.includes(board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
-        if(movesArray.length>0) setAllPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray}]})
+        if(row-1>=0 && col+2<8 && !whitePieces.includes(Board[row-1][col+2])) movesArray.push({row:row-1,col:col+2})
+        if(row-1>=0 && col-2>=0 && !whitePieces.includes(Board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
+        if(row+1<8 && col+2<8 && !whitePieces.includes(Board[row+1][col+2])) movesArray.push({row:row+1,col:col+2})
+        if(row+1<8 && col-2>=0 && !whitePieces.includes(Board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
+
+        if(forRealBoard){
+            if(row-1>=0 && col+2<8 && whitePieces.includes(Board[row-1][col+2])) protectedArray.push({row:row-1,col:col+2})
+            if(row-1>=0 && col-2>=0 && whitePieces.includes(Board[row-1][col-2])) protectedArray.push({row:row-1,col:col-2})
+            if(row+1<8 && col+2<8 && whitePieces.includes(Board[row+1][col+2])) protectedArray.push({row:row+1,col:col+2})
+            if(row+1<8 && col-2>=0 && whitePieces.includes(Board[row+1][col-2])) protectedArray.push({row:row+1,col:col-2})
+        }
+
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK KNIGHT MOVES
-    const findMovesForn = (row:number, col:number) => {
+    const findMovesForn = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         //BIG L
-        if(row+2<8 && col+1<8 && !blackPieces.includes(board[row+2][col+1])) movesArray.push({row:row+2,col:col+1})        
-        if(row+2<8 && col-1>=0 && !blackPieces.includes(board[row+2][col-1])) movesArray.push({row:row+2,col:col-1})
-        if(row-2>=0 && col+1<8 && !blackPieces.includes(board[row-2][col+1])) movesArray.push({row:row-2,col:col+1})
-        if(row-2>=0 && col-1>=0 && !blackPieces.includes(board[row-2][col-1])) movesArray.push({row:row-2,col:col-1})
+        if(row+2<8 && col+1<8 && !blackPieces.includes(Board[row+2][col+1])) movesArray.push({row:row+2,col:col+1})        
+        if(row+2<8 && col-1>=0 && !blackPieces.includes(Board[row+2][col-1])) movesArray.push({row:row+2,col:col-1})
+        if(row-2>=0 && col+1<8 && !blackPieces.includes(Board[row-2][col+1])) movesArray.push({row:row-2,col:col+1})
+        if(row-2>=0 && col-1>=0 && !blackPieces.includes(Board[row-2][col-1])) movesArray.push({row:row-2,col:col-1})
+
+        if(forRealBoard){
+            if(row+2<8 && col+1<8 && blackPieces.includes(Board[row+2][col+1])) protectedArray.push({row:row+2,col:col+1})        
+            if(row+2<8 && col-1>=0 && blackPieces.includes(Board[row+2][col-1])) protectedArray.push({row:row+2,col:col-1})
+            if(row-2>=0 && col+1<8 && blackPieces.includes(Board[row-2][col+1])) protectedArray.push({row:row-2,col:col+1})
+            if(row-2>=0 && col-1>=0 && blackPieces.includes(Board[row-2][col-1])) protectedArray.push({row:row-2,col:col-1})
+        }
+
         //SMALL L
-        if(row+1<8 && col+2<8 && !blackPieces.includes(board[row+1][col+2])) movesArray.push({row:row+1,col:col+2})
-        if(row+1<8 && col-2>=0 && !blackPieces.includes(board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
-        if(row-1>=0 && col+2<8 && !blackPieces.includes(board[row-1][col+2])) movesArray.push({row:row-1,col:col+2})
-        if(row-1>=0 && col-2>=0 && !blackPieces.includes(board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
-        if(movesArray.length>0) setAllPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray}]})
+        if(row+1<8 && col+2<8 && !blackPieces.includes(Board[row+1][col+2])) movesArray.push({row:row+1,col:col+2})
+        if(row+1<8 && col-2>=0 && !blackPieces.includes(Board[row+1][col-2])) movesArray.push({row:row+1,col:col-2})
+        if(row-1>=0 && col+2<8 && !blackPieces.includes(Board[row-1][col+2])) movesArray.push({row:row-1,col:col+2})
+        if(row-1>=0 && col-2>=0 && !blackPieces.includes(Board[row-1][col-2])) movesArray.push({row:row-1,col:col-2})
+
+        if(forRealBoard){
+            if(row+1<8 && col+2<8 && blackPieces.includes(Board[row+1][col+2])) protectedArray.push({row:row+1,col:col+2})
+            if(row+1<8 && col-2>=0 && blackPieces.includes(Board[row+1][col-2])) protectedArray.push({row:row+1,col:col-2})
+            if(row-1>=0 && col+2<8 && blackPieces.includes(Board[row-1][col+2])) protectedArray.push({row:row-1,col:col+2})
+            if(row-1>=0 && col-2>=0 && blackPieces.includes(Board[row-1][col-2])) protectedArray.push({row:row-1,col:col-2})
+        }
+
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
     }
 
     //WHITE ROOK MOVES
-    const findMovesForR = (row:number, col:number) => {
+    const findMovesForR = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         for(let i=row+1;i<8;i++){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(blackPieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=row-1;i>=0;i--){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(blackPieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=col+1;i<8;i++){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-            else if(blackPieces.includes(board[row][i])){
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(Board[row][i])){
                 movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
                 break
             }
             else break
         }
         for(let i=col-1;i>=0;i--){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-                else if(blackPieces.includes(board[row][i])){
-                    movesArray.push({row:row,col:i})
-                    break
-                }
-                else break
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(Board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
+                break
+            }
+            else break
         }
-        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK ROOK MOVES
-    const findMovesForr = (row:number, col:number) => {
+    const findMovesForr = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         for(let i=row+1;i<8;i++){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(whitePieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=row-1;i>=0;i--){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(whitePieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=col+1;i<8;i++){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-            else if(whitePieces.includes(board[row][i])){
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(Board[row][i])){
                 movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
                 break
             }
             else break
         }
         for(let i=col-1;i>=0;i--){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-                else if(whitePieces.includes(board[row][i])){
-                    movesArray.push({row:row,col:i})
-                    break
-                }
-                else break
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(Board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
+                break
+            }
+            else break
         }
-        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //WHITE BISHOP MOVES
-    const findMovesForB = (row:number, col:number) => {
+    const findMovesForB = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         let tempCol = col
         for(let i=row-1;i>=0 && col-1>=0;i--){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(blackPieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -366,9 +734,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row-1;i>=0 && col+1<8;i--){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(blackPieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
@@ -376,9 +748,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col-1>=0;i++){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(blackPieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -386,26 +762,39 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col+1<8;i++){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(blackPieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
             col+=1
         }
         col=tempCol
-        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray}]})
+
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK BISHOP MOVES
-    const findMovesForb = (row:number, col:number) => {
+    const findMovesForb = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         let tempCol = col
         for(let i=row-1;i>=0 && col-1>=0;i--){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(whitePieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -413,9 +802,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row-1;i>=0 && col+1<8;i--){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(whitePieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
@@ -423,9 +816,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col-1>=0;i++){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(whitePieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -433,61 +830,89 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col+1<8;i++){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(whitePieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
             col+=1
         }
         col=tempCol
-        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray}]})
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        }
+        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //WHITE QUEEN MOVES
-    const findMovesForQ = (row:number, col:number) => {
+    const findMovesForQ = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         //ROOK MOVES
         for(let i=row+1;i<8;i++){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(blackPieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=row-1;i>=0;i--){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(blackPieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(blackPieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=col+1;i<8;i++){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-            else if(blackPieces.includes(board[row][i])){
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(Board[row][i])){
                 movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
                 break
             }
             else break
         }
         for(let i=col-1;i>=0;i--){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-                else if(blackPieces.includes(board[row][i])){
-                    movesArray.push({row:row,col:i})
-                    break
-                }
-                else break
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(blackPieces.includes(Board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
+                break
+            }
+            else break
         }
 
         //BISHOP MOVES
         let tempCol = col
         for(let i=row-1;i>=0 && col-1>=0;i--){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(blackPieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -495,9 +920,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row-1;i>=0 && col+1<8;i--){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(blackPieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
@@ -505,9 +934,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col-1>=0;i++){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(blackPieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(blackPieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -515,62 +948,90 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col+1<8;i++){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(blackPieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(blackPieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
             col+=1
         }
         col=tempCol
-        if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
-        setWhiteComp(true)
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            setWhiteComp(true)
+        }
+        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
     }
 
     //BLACK QUEEN MOVES
-    const findMovesForq = (row:number, col:number) => {
+    const findMovesForq = (row:number, col:number, forRealBoard:boolean, Board:string[][]) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         //ROOK MOVES
         for(let i=row+1;i<8;i++){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(whitePieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=row-1;i>=0;i--){
-            if(board[i][col]===" ") movesArray.push({row:i,col:col})
-            else if(whitePieces.includes(board[i][col])){
+            if(Board[i][col]===" ") movesArray.push({row:i,col:col})
+            else if(whitePieces.includes(Board[i][col])){
                 movesArray.push({row:i,col:col})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col})
                 break
             }
             else break
         }
         for(let i=col+1;i<8;i++){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-            else if(whitePieces.includes(board[row][i])){
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(Board[row][i])){
                 movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
                 break
             }
             else break
         }
         for(let i=col-1;i>=0;i--){
-            if(board[row][i]===" ") movesArray.push({row:row,col:i})
-                else if(whitePieces.includes(board[row][i])){
-                    movesArray.push({row:row,col:i})
-                    break
-                }
-                else break
+            if(Board[row][i]===" ") movesArray.push({row:row,col:i})
+            else if(whitePieces.includes(Board[row][i])){
+                movesArray.push({row:row,col:i})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:row,col:i})
+                break
+            }
+            else break
         }
 
         //BISHOP MOVES
         let tempCol = col
         for(let i=row-1;i>=0 && col-1>=0;i--){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(whitePieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -578,9 +1039,13 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row-1;i>=0 && col+1<8;i--){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(whitePieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
@@ -589,9 +1054,13 @@ const GamePage=()=>{
 
         col=tempCol
         for(let i=row+1;i<8 && col-1>=0;i++){
-            if(board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
-            else if(whitePieces.includes(board[i][col-1])){
+            if(Board[i][col-1]===" ") movesArray.push({row:i,col:col-1})
+            else if(whitePieces.includes(Board[i][col-1])){
                 movesArray.push({row:i,col:col-1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col-1})
                 break
             }
             else break
@@ -599,21 +1068,26 @@ const GamePage=()=>{
         }
         col=tempCol
         for(let i=row+1;i<8 && col+1<8;i++){
-            if(board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
-            else if(whitePieces.includes(board[i][col+1])){
+            if(Board[i][col+1]===" ") movesArray.push({row:i,col:col+1})
+            else if(whitePieces.includes(Board[i][col+1])){
                 movesArray.push({row:i,col:col+1})
+                break
+            }
+            else if(forRealBoard){
+                protectedArray.push({row:i,col:col+1})
                 break
             }
             else break
             col+=1
         }
         col=tempCol
-        if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
-        setBlackComp(true)
+        if(forRealBoard){
+            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            setBlackComp(true)
+        }
+        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
     }
 
-    //oka piece nko piece ni protect chesetapud king ah piece ni champaledu code raayi 
-    //allMovesForWhite array lone nkoo array tesko prathi piece ki protected ani dantlo ah piece eh pieces in protect chestundo add chey
     const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
         const removeMoves:{ row: number; col: number }[] = []
         const filteredMovesArray = movesArray.filter((move) => {
@@ -708,29 +1182,56 @@ const GamePage=()=>{
         const newFilteredMovesArray = filteredMovesArray.filter((move)=>{return !(removeMoves.some((rMove)=>rMove.row===move.row && rMove.col===move.col))})
         return newFilteredMovesArray
     }
-    
+
 
     //WHITE KING MOVES 
     const findMovesForK= (row:number, col:number) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         if(row-1>=0 && (board[row-1][col]===" " || blackPieces.includes(board[row-1][col]))) movesArray.push({row:row-1,col:col})
         if(row+1<8 && (board[row+1][col]===" " || blackPieces.includes(board[row+1][col]))) movesArray.push({row:row+1,col:col})
         if(col-1>=0 && (board[row][col-1]===" " || blackPieces.includes(board[row][col-1]))) movesArray.push({row:row,col:col-1})
         if(col+1<8 && (board[row][col+1]===" " || blackPieces.includes(board[row][col+1]))) movesArray.push({row:row,col:col+1})
 
+        if(row-1>=0 && (whitePieces.includes(board[row-1][col]))) protectedArray.push({row:row-1,col:col})
+        if(row+1<8 && (whitePieces.includes(board[row+1][col]))) protectedArray.push({row:row+1,col:col})
+        if(col-1>=0 && (whitePieces.includes(board[row][col-1]))) protectedArray.push({row:row,col:col-1})
+        if(col+1<8 && (whitePieces.includes(board[row][col+1]))) protectedArray.push({row:row,col:col+1})
+
         if(row-1>=0 && col-1>=0 && (board[row-1][col-1]===" " || blackPieces.includes(board[row-1][col-1]))) movesArray.push({row:row-1,col:col-1})
         if(row-1>=0 && col+1<8 && (board[row-1][col+1]===" " || blackPieces.includes(board[row-1][col+1]))) movesArray.push({row:row-1,col:col+1})
         if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || blackPieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || blackPieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
-        
-        const filteredMovesArray = filterMovesForWhiteKing(row,col,movesArray)
 
-        if(filteredMovesArray.length>0){
-            if(allPossibleMovesForWhite.some((piece)=>piece.piece==="K")){
-                setAllPossibleMovesForWhite((prev)=>{return prev.map((piece) => { return piece.piece === "K" ? { piece: "K", posi: { row: row, col: col }, moves: filteredMovesArray } : piece })})
+        if(row-1>=0 && col-1>=0 && (whitePieces.includes(board[row-1][col-1]))) protectedArray.push({row:row-1,col:col-1})
+        if(row-1>=0 && col+1<8 && (whitePieces.includes(board[row-1][col+1]))) protectedArray.push({row:row-1,col:col+1})
+        if(row+1<8 && col-1>=0 && (whitePieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
+        if(row+1<8 && col+1<8 && (whitePieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
+        
+        if(whiteKingCastlePossible && whiteRookCastlePossible.left && !findThreatToWhiteKing(board) && !checkMiddleSquaresAttacked("white","left")) movesArray.push({row:row,col:col-2})
+        if(whiteKingCastlePossible && whiteRookCastlePossible.right && !findThreatToWhiteKing(board) && !checkMiddleSquaresAttacked("white","right")) movesArray.push({row:row,col:col+2})
+
+        if((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0)){
+            setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
+        }
+        else{
+            const filteredMovesArray = filterMovesForWhiteKing(row,col,movesArray)
+            const newFilteredMovesArray = filteredMovesArray.filter((move)=>(!allPossibleMovesForBlack.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            if(newFilteredMovesArray.length>0){
+                if(allPossibleMovesForWhite.some((piece)=>piece.piece==="K")){
+                    setAllPossibleMovesForWhite((prev)=>{return prev.map((piece) => { return piece.piece === "K" ? { piece: "K", posi: { row: row, col: col }, moves: newFilteredMovesArray, protected:protectedArray } : piece })})
+                }
+                else{
+                    setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:newFilteredMovesArray, protected:protectedArray}]})
+                }
             }
             else{
-                setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:filteredMovesArray}]})
+                if(allPossibleMovesForWhite.some((piece)=>piece.piece==="K")){
+                    setAllPossibleMovesForWhite((prev)=>{return prev.map((piece) => { return piece.piece === "K" ? { piece: "K", posi: { row: row, col: col }, moves: [], protected:protectedArray } : piece })})
+                }
+                else{
+                    setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:[], protected:protectedArray}]})
+                }
             }
         }
     }
@@ -832,24 +1333,51 @@ const GamePage=()=>{
     //BLACK KING MOVES 
     const findMovesFork= (row:number, col:number) => {
         const movesArray:{row:number,col:number}[] = []
+        const protectedArray:{row:number,col:number}[] = []
         if(row-1>=0 && (board[row-1][col]===" " || whitePieces.includes(board[row-1][col]))) movesArray.push({row:row-1,col:col})
         if(row+1<8 && (board[row+1][col]===" " || whitePieces.includes(board[row+1][col]))) movesArray.push({row:row+1,col:col})
         if(col-1>=0 && (board[row][col-1]===" " || whitePieces.includes(board[row][col-1]))) movesArray.push({row:row,col:col-1})
         if(col+1<8 && (board[row][col+1]===" " || whitePieces.includes(board[row][col+1]))) movesArray.push({row:row,col:col+1})
+
+        if(row-1>=0 && (blackPieces.includes(board[row-1][col]))) protectedArray.push({row:row-1,col:col})
+        if(row+1<8 && (blackPieces.includes(board[row+1][col]))) protectedArray.push({row:row+1,col:col})
+        if(col-1>=0 && (blackPieces.includes(board[row][col-1]))) protectedArray.push({row:row,col:col-1})
+        if(col+1<8 && (blackPieces.includes(board[row][col+1]))) protectedArray.push({row:row,col:col+1})
 
         if(row-1>=0 && col-1>=0 && (board[row-1][col-1]===" " || whitePieces.includes(board[row-1][col-1]))) movesArray.push({row:row-1,col:col-1})
         if(row-1>=0 && col+1<8 && (board[row-1][col+1]===" " || whitePieces.includes(board[row-1][col+1]))) movesArray.push({row:row-1,col:col+1})
         if(row+1<8 && col-1>=0 && (board[row+1][col-1]===" " || whitePieces.includes(board[row+1][col-1]))) movesArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (board[row+1][col+1]===" " || whitePieces.includes(board[row+1][col+1]))) movesArray.push({row:row+1,col:col+1})
         
-        const filteredMovesArray = filterMovesForBlackKing(row,col,movesArray)
+        if(row-1>=0 && col-1>=0 && (blackPieces.includes(board[row-1][col-1]))) protectedArray.push({row:row-1,col:col-1})
+        if(row-1>=0 && col+1<8 && (blackPieces.includes(board[row-1][col+1]))) protectedArray.push({row:row-1,col:col+1})
+        if(row+1<8 && col-1>=0 && (blackPieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
+        if(row+1<8 && col+1<8 && (blackPieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
         
-        if(filteredMovesArray.length>0){
-            if(allPossibleMovesForBlack.some((piece)=>piece.piece==="k")){
-                setAllPossibleMovesForBlack((prev)=>{return prev.map((piece) => { return piece.piece === "k" ? { piece: "k", posi: { row: row, col: col }, moves: filteredMovesArray } : piece })})
+        if(blackKingCastlePossible && blackRookCastlePossible.left && !findThreatToBlackKing(board) && !checkMiddleSquaresAttacked("black","left")) movesArray.push({row:row,col:col-2})
+        if(blackKingCastlePossible && blackRookCastlePossible.right && !findThreatToBlackKing(board) && !checkMiddleSquaresAttacked("black","right")) movesArray.push({row:row,col:col+2})
+
+        if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+            setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
+        }
+        else{
+            const filteredMovesArray = filterMovesForBlackKing(row,col,movesArray)
+            const newFilteredMovesArray = filteredMovesArray.filter((move)=>(!allPossibleMovesForWhite.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            if(newFilteredMovesArray.length>0){
+                if(allPossibleMovesForBlack.some((piece)=>piece.piece==="k")){
+                    setAllPossibleMovesForBlack((prev)=>{return prev.map((piece) => { return piece.piece === "k" ? { piece: "k", posi: { row: row, col: col }, moves: newFilteredMovesArray, protected:protectedArray } : piece })})
+                }
+                else{
+                    setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:newFilteredMovesArray, protected:protectedArray}]})
+                }
             }
             else{
-                setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:filteredMovesArray}]})
+                if(allPossibleMovesForBlack.some((piece)=>piece.piece==="k")){
+                    setAllPossibleMovesForBlack((prev)=>{return prev.map((piece) => { return piece.piece === "k" ? { piece: "k", posi: { row: row, col: col }, moves: [], protected:protectedArray } : piece })})
+                }
+                else{
+                    setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:[], protected:protectedArray}]})
+                }
             }
         }
     }
@@ -860,24 +1388,23 @@ const GamePage=()=>{
     //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
         curWhite.forEach((key)=>{
-            if(key.piece==="P") findMovesForP(key.row,key.col)
-            if(key.piece==="N") findMovesForN(key.row,key.col)
-            if(key.piece==="R") findMovesForR(key.row,key.col)
-            if(key.piece==="B") findMovesForB(key.row,key.col)
-            if(key.piece==="Q") findMovesForQ(key.row,key.col)
+            if(key.piece==="P") findMovesForP(key.row,key.col,true,board)
+            if(key.piece==="N") findMovesForN(key.row,key.col,true,board)
+            if(key.piece==="R") findMovesForR(key.row,key.col,true,board)
+            if(key.piece==="B") findMovesForB(key.row,key.col,true,board)
+            if(key.piece==="Q") findMovesForQ(key.row,key.col,true,board)
             if(key.piece==="K") findMovesForK(key.row,key.col)
-
         })
     },[curWhite])
 
     //Now for each black piece selected find all the moves that are possible
     useEffect(()=>{
         curBlack.forEach((key)=>{
-            if(key.piece==="p") findMovesForp(key.row,key.col)
-            if(key.piece==="n") findMovesForn(key.row,key.col)
-            if(key.piece==="r") findMovesForr(key.row,key.col)
-            if(key.piece==="b") findMovesForb(key.row,key.col)
-            if(key.piece==="q") findMovesForq(key.row,key.col)
+            if(key.piece==="p") findMovesForp(key.row,key.col,true,board)
+            if(key.piece==="n") findMovesForn(key.row,key.col,true,board)
+            if(key.piece==="r") findMovesForr(key.row,key.col,true,board)
+            if(key.piece==="b") findMovesForb(key.row,key.col,true,board)
+            if(key.piece==="q") findMovesForq(key.row,key.col,true,board)
             if(key.piece==="k") findMovesFork(key.row,key.col)
         })
     },[curBlack])
@@ -1014,4 +1541,5 @@ const GamePage=()=>{
         </main>
     )
 }
+
 export default GamePage
