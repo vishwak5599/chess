@@ -112,11 +112,11 @@ const GamePage=()=>{
                 }
             })
         })
-        return allPossibleMovesForBlack.some((piece)=>{
-            piece.moves.some((move)=>{
+        return allPossibleMovesForBlack.some((piece)=>
+            piece.moves.some((move)=>
                 move.row===row && move.col===col
-            })
-        })
+            )
+        )
     }
 
     //function to find if Black King is in threat
@@ -130,11 +130,11 @@ const GamePage=()=>{
                 }
             })
         })
-        return allPossibleMovesForWhite.some((piece)=>{
-            piece.moves.some((move)=>{
+        return allPossibleMovesForWhite.some((piece)=>
+            piece.moves.some((move)=>
                 move.row===row && move.col===col
-            })
-        })
+            )
+        )
     }
 
     //function to check if there is any square attacked in between king and rook before castling
