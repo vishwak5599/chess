@@ -368,6 +368,7 @@ const GamePage=()=>{
                     handleRookPosiAfterCastling(7,7,5)
                 }
                 setWhiteKingCastlePossible(false)
+                
             }
             if(selPiece==="k" && selRow===0 && selCol===4){
                 if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===0 && newCol===2){
