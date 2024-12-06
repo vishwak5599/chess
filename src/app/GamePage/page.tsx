@@ -102,7 +102,7 @@ const GamePage=()=>{
     const blackPieces = ["r","n","b","q","k","p"]
 
     //function to find if White King is in threat
-    const findThreatToWhiteKing = (custBoard:string[][]) => {
+    const findThreatToWhiteKing = (forRealBoard: boolean, custBoard:string[][]) => {
         let row=0,col=0
         custBoard.forEach((r,i)=>{
             r.forEach((c,j)=>{
@@ -112,15 +112,24 @@ const GamePage=()=>{
                 }
             })
         })
-        return allPossibleMovesForBlack.some((piece)=>
-            piece.moves.some((move)=>
-                move.row===row && move.col===col
+        if(forRealBoard){
+            return allPossibleMovesForBlack.some((piece)=>
+                piece.moves.some((move)=>
+                    move.row===row && move.col===col
+                )
             )
-        )
+        }
+        else{
+            return allTempPossibleMovesForBlack.some((piece)=>
+                piece.moves.some((move)=>
+                    move.row===row && move.col===col
+                )
+            )
+        }
     }
 
     //function to find if Black King is in threat
-    const findThreatToBlackKing = (custBoard:string[][]) => {
+    const findThreatToBlackKing = (forRealBoard:boolean, custBoard:string[][]) => {
         let row=0,col=0
         custBoard.forEach((r,i)=>{
             r.forEach((c,j)=>{
@@ -130,11 +139,20 @@ const GamePage=()=>{
                 }
             })
         })
-        return allPossibleMovesForWhite.some((piece)=>
-            piece.moves.some((move)=>
-                move.row===row && move.col===col
+        if(forRealBoard){
+            return allPossibleMovesForWhite.some((piece)=>
+                piece.moves.some((move)=>
+                    move.row===row && move.col===col
+                )
             )
-        )
+        }
+        else{
+            return allTempPossibleMovesForWhite.some((piece)=>
+                piece.moves.some((move)=>
+                    move.row===row && move.col===col
+                )
+            )
+        }
     }
 
     //function to check if there is any square attacked in between king and rook before castling
@@ -326,6 +344,7 @@ const GamePage=()=>{
     }
 
     const updateSelectedPiecePosition = (selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number) => {
+
         if(pieceColour===1){
             //remove the enpassant pawns if enpassant move happens
             if(selPiece==="P" && selRow===3 && allMoves[allMoves.length-1].piece==="p" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
@@ -1208,8 +1227,8 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (whitePieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (whitePieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
         
-        if(whiteKingCastlePossible && whiteRookCastlePossible.left && !findThreatToWhiteKing(board) && !checkMiddleSquaresAttacked("white","left")) movesArray.push({row:row,col:col-2})
-        if(whiteKingCastlePossible && whiteRookCastlePossible.right && !findThreatToWhiteKing(board) && !checkMiddleSquaresAttacked("white","right")) movesArray.push({row:row,col:col+2})
+        if(whiteKingCastlePossible && whiteRookCastlePossible.left && !findThreatToWhiteKing(true,board) && !checkMiddleSquaresAttacked("white","left")) movesArray.push({row:row,col:col-2})
+        if(whiteKingCastlePossible && whiteRookCastlePossible.right && !findThreatToWhiteKing(true,board) && !checkMiddleSquaresAttacked("white","right")) movesArray.push({row:row,col:col+2})
 
         if((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0)){
             setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
@@ -1354,8 +1373,8 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (blackPieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (blackPieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
         
-        if(blackKingCastlePossible && blackRookCastlePossible.left && !findThreatToBlackKing(board) && !checkMiddleSquaresAttacked("black","left")) movesArray.push({row:row,col:col-2})
-        if(blackKingCastlePossible && blackRookCastlePossible.right && !findThreatToBlackKing(board) && !checkMiddleSquaresAttacked("black","right")) movesArray.push({row:row,col:col+2})
+        if(blackKingCastlePossible && blackRookCastlePossible.left && !findThreatToBlackKing(true,board) && !checkMiddleSquaresAttacked("black","left")) movesArray.push({row:row,col:col-2})
+        if(blackKingCastlePossible && blackRookCastlePossible.right && !findThreatToBlackKing(true,board) && !checkMiddleSquaresAttacked("black","right")) movesArray.push({row:row,col:col+2})
 
         if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
             setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
