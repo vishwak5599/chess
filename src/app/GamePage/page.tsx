@@ -328,7 +328,16 @@ const GamePage=()=>{
 
     //function to handle if a piece is selected i.e QRNP/qrnp if a pawn reaches last square
     const handlePawnToLastSquare = (updatedPiece:string) => {
-        if(pawnToLastSquarePosi.piece!==null && pawnToLastSquarePosi.selRow!==null && pawnToLastSquarePosi.selCol!==null && pawnToLastSquarePosi.newRow!==null && pawnToLastSquarePosi.newCol!==null) updateSelectedPiecePosition(updatedPiece,pawnToLastSquarePosi.selRow,pawnToLastSquarePosi.selCol,pawnToLastSquarePosi.newRow,pawnToLastSquarePosi.newCol)
+        if(pawnToLastSquarePosi.piece!==null && pawnToLastSquarePosi.selRow!==null && pawnToLastSquarePosi.selCol!==null && pawnToLastSquarePosi.newRow!==null && pawnToLastSquarePosi.newCol!==null){
+            const row = pawnToLastSquarePosi.newRow
+            const col = pawnToLastSquarePosi.newCol
+            setBoard((prevBoard)=>{
+                const newBoard = [...prevBoard]
+                newBoard[row] = [...prevBoard[row]]
+                newBoard[row][col] = updatedPiece
+                return newBoard
+            })
+        }
         setPawnToLastSquarePosi({piece:null,selRow:null,selCol:null,newRow:null,newCol:null})
     }
 
@@ -1536,16 +1545,10 @@ const GamePage=()=>{
                             <div key={i} className="flex justify-center">
                                 {row.map((col,j)=>(
                                     <div key={i+""+j} className={`${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}`}>
-                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-2 md:border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center relative`}
+                                    <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-2 md:border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
                                         onClick={()=>handleSelectedPiece(col,i,j)}
                                     >
-                                        {j === 0 && (
-                                            <div className="absolute top-0 left-0.5 lg:left-1 text-xxs lg:text-xs">{pieceColour===1 ? 8 - i : i + 1}</div>
-                                        )}
                                         <ChessPiece col={col} />
-                                        {i === 7 && (
-                                            <div className="absolute bottom-0 right-0.5 lg:right-1 text-xxs lg:text-xs">{pieceColour===1 ? String.fromCharCode(97 + j) : String.fromCharCode(104 - j)}</div>
-                                        )}
                                     </div>
                                     </div>
                                 ))}
