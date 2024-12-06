@@ -343,90 +343,212 @@ const GamePage=()=>{
         })
     }
 
+    const [tempBoard, setTempBoard] = useState(board)
+    const [tempWhite, setTempWhite] = useState<piecePositionType[]>([])
+    const [tempBlack, setTempBlack] = useState<piecePositionType[]>([])
+    const [whiteTempMovesProsComp, setWhiteTempMovesProsComp] = useState(false)
+    const [blackTempMovesProsComp, setBlackTempMovesProsComp] = useState(false)
+    const [selectedMove, setSelectedMove] = useState<{selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number} | null>(null)
+    
+    useEffect(()=>{
+        setTempBoard(board)
+    },[board])
+
+    useEffect(()=>{
+        setAllTempPossibleMovesForBlack([])
+        tempBlack.forEach((key)=>{
+            if(key.piece==="p") findMovesForp(key.row,key.col,false,tempBoard)
+            if(key.piece==="n") findMovesForn(key.row,key.col,false,tempBoard)
+            if(key.piece==="r") findMovesForr(key.row,key.col,false,tempBoard)
+            if(key.piece==="b") findMovesForb(key.row,key.col,false,tempBoard)
+            if(key.piece==="q") findMovesForq(key.row,key.col,false,tempBoard)
+        })
+    },[tempBlack])
+
+    useEffect(()=>{
+        setAllTempPossibleMovesForWhite([])
+        tempWhite.forEach((key)=>{
+            if(key.piece==="P") findMovesForP(key.row,key.col,false,tempBoard)
+            if(key.piece==="N") findMovesForN(key.row,key.col,false,tempBoard)
+            if(key.piece==="R") findMovesForR(key.row,key.col,false,tempBoard)
+            if(key.piece==="B") findMovesForB(key.row,key.col,false,tempBoard)
+            if(key.piece==="Q") findMovesForQ(key.row,key.col,false,tempBoard)
+        })
+    },[tempWhite])
+
+    useEffect(()=>{
+        if(blackTempMovesProsComp){
+            console.log(tempBoard)
+            const isWhiteInThreat = findThreatToWhiteKing(false,tempBoard)
+            if(!isWhiteInThreat){
+                console.log("isMovePossible:true")
+                handleMakeTheMove()
+            }
+            setBlackTempMovesProsComp(false)
+        }
+    },[blackTempMovesProsComp,tempBoard])
+
+    useEffect(()=>{
+        if(whiteTempMovesProsComp){
+            console.log(tempBoard)
+            const isBlackKingInThreat = findThreatToBlackKing(false,tempBoard)
+            if(!isBlackKingInThreat){
+                console.log("isMovePossible:true")
+                handleMakeTheMove()
+            }
+            setWhiteTempMovesProsComp(false)
+        }
+    },[whiteTempMovesProsComp,tempBoard])
+
+    useEffect(()=>{
+        console.log("threat :",findThreatToWhiteKing(true,board))
+    },[moves])
+
+    const handleMakeTheMove = () =>{
+        if(selectedMove){
+            const {selPiece, selRow, selCol, newRow, newCol} = selectedMove
+            
+            if(pieceColour===1){
+                //remove the enpassant pawns if enpassant move happens
+                if(selPiece==="P" && selRow===3 && allMoves[allMoves.length-1].piece==="p" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+                if(selPiece==="p" && selRow===4 && allMoves[allMoves.length-1].piece==="P" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+                //if pawns moves to last square
+                if(selPiece==="P" && newRow===0) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+                if(selPiece==="p" && newRow===7) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+    
+                //set that the castling is not possible if the rook is moved
+                if(selPiece==="R" && selRow===7 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
+                if(selPiece==="R" && selRow===7 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
+                if(selPiece==="r" && selRow===0 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
+                if(selPiece==="r" && selRow===0 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
+    
+                //set that the castling is not possible if the king is moved                
+                if(selPiece==="K" && selRow===7 && selCol===4){
+                    if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===7 && newCol===2){
+                        handleRookPosiAfterCastling(7,0,3)
+                    }
+                    if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===7 && newCol===6){
+                        handleRookPosiAfterCastling(7,7,5)
+                    }
+                    setWhiteKingCastlePossible(false)
+                }
+                if(selPiece==="k" && selRow===0 && selCol===4){
+                    if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===0 && newCol===2){
+                        handleRookPosiAfterCastling(0,0,3)
+                    }
+                    if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===0 && newCol===6){
+                        handleRookPosiAfterCastling(0,7,5)
+                    }
+                    setBlackKingCastlePossible(false)
+                }
+            }
+            else{
+                //remove the enpassant pawns if enpassant move happens
+                if(selPiece==="P" && selRow===4 && allMoves[allMoves.length-1].piece==="p" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+                if(selPiece==="p" && selRow===3 && allMoves[allMoves.length-1].piece==="P" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
+                //if pawns moves to last square
+                if(selPiece==="P" && newRow===7) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+                if(selPiece==="p" && newRow===0) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+    
+                //set that the castling is not possible if the rook is moved
+                if(selPiece==="R" && selRow===0 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
+                if(selPiece==="R" && selRow===0 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
+                if(selPiece==="r" && selRow===7 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
+                if(selPiece==="r" && selRow===7 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
+    
+                //set that the castling is not possible if the king is moved
+                if(selPiece==="K" && selRow===0 && selCol===4){
+                    if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===0 && newCol===2){
+                        handleRookPosiAfterCastling(0,0,3)
+                    }
+                    if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===0 && newCol===6){
+                        handleRookPosiAfterCastling(0,7,5)
+                    }
+                    setWhiteKingCastlePossible(false)
+                }
+                if(selPiece==="k" && selRow===7 && selCol===4){
+                    if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===7 && newCol===2){
+                        handleRookPosiAfterCastling(7,0,3)
+                    }
+                    if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===7 && newCol===6){
+                        handleRookPosiAfterCastling(7,7,5)
+                    }
+                    setBlackKingCastlePossible(false)
+                }
+            }
+    
+            //**set all the previous moves**
+            setAllMoves((prev)=>{return [...prev,{piece:selPiece,fromRow:selRow,fromCol:selCol,toRow:newRow,toCol:newCol}]})
+    
+            //update the selected piece position
+            setBoard((prevBoard)=>{
+                const newBoard = [...prevBoard]
+                newBoard[selRow] = [...prevBoard[selRow]]
+                newBoard[newRow] = [...prevBoard[newRow]]
+                newBoard[selRow][selCol] = " "
+                newBoard[newRow][newCol] = selPiece
+                return newBoard
+            })
+        }
+
+        setSelectedMove(null)
+    }
+
     const updateSelectedPiecePosition = (selPiece:string,selRow:number,selCol:number,newRow:number,newCol:number) => {
 
-        if(pieceColour===1){
-            //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===3 && allMoves[allMoves.length-1].piece==="p" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
-            if(selPiece==="p" && selRow===4 && allMoves[allMoves.length-1].piece==="P" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
-            //if pawns moves to last square
-            if(selPiece==="P" && newRow===0) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
-            if(selPiece==="p" && newRow===7) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
-
-            //set that the castling is not possible if the rook is moved
-            if(selPiece==="R" && selRow===7 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
-            if(selPiece==="R" && selRow===7 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
-            if(selPiece==="r" && selRow===0 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
-            if(selPiece==="r" && selRow===0 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
-
-            //set that the castling is not possible if the king is moved                
-            if(selPiece==="K" && selRow===7 && selCol===4){
-                if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===7 && newCol===2){
-                    handleRookPosiAfterCastling(7,0,3)
-                }
-                if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===7 && newCol===6){
-                    handleRookPosiAfterCastling(7,7,5)
-                }
-                setWhiteKingCastlePossible(false)
-                
-            }
-            if(selPiece==="k" && selRow===0 && selCol===4){
-                if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===0 && newCol===2){
-                    handleRookPosiAfterCastling(0,0,3)
-                }
-                if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===0 && newCol===6){
-                    handleRookPosiAfterCastling(0,7,5)
-                }
-                setBlackKingCastlePossible(false)
-            }
+        setTempBoard(board)
+        if((pieceColour===1 && selPiece==="P" && selRow===3 && allMoves[allMoves.length-1].piece==="p" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) || 
+            (pieceColour===1 && selPiece==="p" && selRow===4 && allMoves[allMoves.length-1].piece==="P" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) ||
+            (pieceColour===0 && selPiece==="P" && selRow===4 && allMoves[allMoves.length-1].piece==="p" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) ||
+            (pieceColour===0 && selPiece==="p" && selRow===3 && allMoves[allMoves.length-1].piece==="P" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3))
+        {
+            setTempBoard((prevBoard)=>{
+                let tBoard = prevBoard
+                tBoard[selRow] = [...prevBoard[selRow]]
+                tBoard[newRow] = [...prevBoard[newRow]]
+                tBoard[selRow][selCol] = " "
+                tBoard[newRow][newCol] = selPiece
+                tBoard[allMoves[allMoves.length-1].toRow][allMoves[allMoves.length-1].toCol] = " "
+                return tBoard
+            })
         }
         else{
-            //remove the enpassant pawns if enpassant move happens
-            if(selPiece==="P" && selRow===4 && allMoves[allMoves.length-1].piece==="p" && newRow===5 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) removeEnpassedPawns("p",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
-            if(selPiece==="p" && selRow===3 && allMoves[allMoves.length-1].piece==="P" && newRow===2 && newCol===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) removeEnpassedPawns("P",allMoves[allMoves.length-1].toRow,allMoves[allMoves.length-1].toCol)
-            //if pawns moves to last square
-            if(selPiece==="P" && newRow===7) setPawnToLastSquarePosi({piece:"P",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
-            if(selPiece==="p" && newRow===0) setPawnToLastSquarePosi({piece:"p",selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
-
-            //set that the castling is not possible if the rook is moved
-            if(selPiece==="R" && selRow===0 && selCol===0 && whiteRookCastlePossible.left) setWhiteRookCastlePossible((prev)=>({...prev,left:false}))
-            if(selPiece==="R" && selRow===0 && selCol===7 && whiteRookCastlePossible.right) setWhiteRookCastlePossible((prev)=>({...prev,right:false}))
-            if(selPiece==="r" && selRow===7 && selCol===0 && blackRookCastlePossible.left) setBlackRookCastlePossible((prev)=>({...prev,left:false}))
-            if(selPiece==="r" && selRow===7 && selCol===7 && blackRookCastlePossible.right) setBlackRookCastlePossible((prev)=>({...prev,right:false}))
-
-            //set that the castling is not possible if the king is moved
-            if(selPiece==="K" && selRow===0 && selCol===4){
-                if(whiteKingCastlePossible && whiteRookCastlePossible.left && newRow===0 && newCol===2){
-                    handleRookPosiAfterCastling(0,0,3)
-                }
-                if(whiteKingCastlePossible && whiteRookCastlePossible.right && newRow===0 && newCol===6){
-                    handleRookPosiAfterCastling(0,7,5)
-                }
-                setWhiteKingCastlePossible(false)
-            }
-            if(selPiece==="k" && selRow===7 && selCol===4){
-                if(blackKingCastlePossible && blackRookCastlePossible.left && newRow===7 && newCol===2){
-                    handleRookPosiAfterCastling(7,0,3)
-                }
-                if(blackKingCastlePossible && blackRookCastlePossible.right && newRow===7 && newCol===6){
-                    handleRookPosiAfterCastling(7,7,5)
-                }
-                setBlackKingCastlePossible(false)
-            }
+            setTempBoard((prevBoard)=>{
+                let tBoard = prevBoard
+                tBoard[selRow] = [...prevBoard[selRow]]
+                tBoard[newRow] = [...prevBoard[newRow]]
+                tBoard[selRow][selCol] = " "
+                tBoard[newRow][newCol] = selPiece
+                return tBoard
+            })
         }
 
-        //**set all the previous moves**
-        setAllMoves((prev)=>{return [...prev,{piece:selPiece,fromRow:selRow,fromCol:selCol,toRow:newRow,toCol:newCol}]})
+        //if it is white to move and if a piece is moved check if white king is threatened
+        if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+            setTempBlack([])
+            let newArr:piecePositionType[] = []
+            tempBoard.forEach((r,i)=>{
+                r.forEach((c,j)=>{
+                    if(blackPieces.includes(c)) newArr.push({piece:c,row:i,col:j})
+                })
+            })
+            setTempBlack(newArr)
+        }
 
-        //update the selected piece position
-        setBoard((prevBoard)=>{
-            const newBoard = [...prevBoard]
-            newBoard[selRow] = [...prevBoard[selRow]]
-            newBoard[newRow] = [...prevBoard[newRow]]
-            newBoard[selRow][selCol] = " "
-            newBoard[newRow][newCol] = selPiece
-            return newBoard
-        })
+        //if it is black to move and if a piece is moved check if black king is threatened
+        if((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0)){
+            setTempWhite([])
+            let newArr:piecePositionType[] = []
+            tempBoard.forEach((r,i)=>{
+                r.forEach((c,j)=>{
+                    if(whitePieces.includes(c)) newArr.push({piece:c,row:i,col:j})
+                })
+            })
+            setTempWhite(newArr)
+        }
+
+        setSelectedMove({selPiece:selPiece,selRow:selRow,selCol:selCol,newRow:newRow,newCol:newCol})
+
     }
 
     const handleSelectedPiece = (piece:string,i:number,j:number) => {
@@ -985,7 +1107,10 @@ const GamePage=()=>{
             if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
             setWhiteComp(true)
         }
-        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
+        else{
+            setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
+            setWhiteTempMovesProsComp(true)
+        }
     }
 
     //BLACK QUEEN MOVES
@@ -1105,7 +1230,10 @@ const GamePage=()=>{
             if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
             setBlackComp(true)
         }
-        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
+        else{
+            setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
+            setBlackTempMovesProsComp(true)
+        }
     }
 
     const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
