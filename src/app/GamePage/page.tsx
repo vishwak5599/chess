@@ -1,7 +1,7 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
 import { useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 
@@ -113,11 +113,11 @@ const GamePage=()=>{
             })
         })
         
-            return moves.some((piece)=>
-                piece.moves.some((move)=>
-                    move.row===row && move.col===col
-                )
+        return moves.some((piece)=>
+            piece.moves.some((move)=>
+                move.row===row && move.col===col
             )
+        )
         
     }
 
@@ -133,11 +133,11 @@ const GamePage=()=>{
             })
         })
         
-            return allPossibleMovesForWhite.some((piece)=>
-                piece.moves.some((move)=>
-                    move.row===row && move.col===col
-                )
+        return allPossibleMovesForWhite.some((piece)=>
+            piece.moves.some((move)=>
+                move.row===row && move.col===col
             )
+        )
     }
 
     //function to check if there is any square attacked in between king and rook before castling
