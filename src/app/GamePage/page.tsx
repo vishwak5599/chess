@@ -102,7 +102,7 @@ const GamePage=()=>{
     const blackPieces = ["r","n","b","q","k","p"]
 
     //function to find if White King is in threat
-    const findThreatToWhiteKing = (forRealBoard: boolean, custBoard:string[][]) => {
+    const findThreatToWhiteKing = (moves:allPossibleMovesType[] | allTempPossibleMovesType[], custBoard:string[][]) => {
         let row=0,col=0
         custBoard.forEach((r,i)=>{
             r.forEach((c,j)=>{
@@ -112,24 +112,17 @@ const GamePage=()=>{
                 }
             })
         })
-        if(forRealBoard){
-            return allPossibleMovesForBlack.some((piece)=>
+        
+            return moves.some((piece)=>
                 piece.moves.some((move)=>
                     move.row===row && move.col===col
                 )
             )
-        }
-        else{
-            return allTempPossibleMovesForBlack.some((piece)=>
-                piece.moves.some((move)=>
-                    move.row===row && move.col===col
-                )
-            )
-        }
+        
     }
 
     //function to find if Black King is in threat
-    const findThreatToBlackKing = (forRealBoard:boolean, custBoard:string[][]) => {
+    const findThreatToBlackKing = (moves:allPossibleMovesType[] | allTempPossibleMovesType[], custBoard:string[][]) => {
         let row=0,col=0
         custBoard.forEach((r,i)=>{
             r.forEach((c,j)=>{
@@ -139,20 +132,12 @@ const GamePage=()=>{
                 }
             })
         })
-        if(forRealBoard){
+        
             return allPossibleMovesForWhite.some((piece)=>
                 piece.moves.some((move)=>
                     move.row===row && move.col===col
                 )
             )
-        }
-        else{
-            return allTempPossibleMovesForWhite.some((piece)=>
-                piece.moves.some((move)=>
-                    move.row===row && move.col===col
-                )
-            )
-        }
     }
 
     //function to check if there is any square attacked in between king and rook before castling
@@ -435,6 +420,7 @@ const GamePage=()=>{
             newBoard[newRow][newCol] = selPiece
             return newBoard
         })
+
     }
 
     const handleSelectedPiece = (piece:string,i:number,j:number) => {
@@ -516,8 +502,8 @@ const GamePage=()=>{
             if(row===4 && col>0 && Board[row][col-1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row+1,col:col-1})
             if(row===4 && col<7 && Board[row][col+1]==="p" && allMoves[allMoves.length-1].piece==="p" && allMoves[allMoves.length-1].toRow===4 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row+1,col:col+1})
         }
-        if(forRealBoard) setAllPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}])
-        else setAllTempPossibleMovesForWhite((prev)=>[...prev,{piece:"P",posi:{row:row,col:col},moves:movesArray}])
+        if(forRealBoard) return {piece:"P",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+        else return {piece:"P",posi:{row:row,col:col},moves:movesArray}
     }
 
     //BLACK PAWN MOVES
@@ -550,8 +536,8 @@ const GamePage=()=>{
             if(row===3 && col>0 && Board[row][col-1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col-1) movesArray.push({row:row-1,col:col-1})
             if(row===3 && col<7 && Board[row][col+1]==="P" && allMoves[allMoves.length-1].piece==="P" && allMoves[allMoves.length-1].toRow===3 && allMoves[allMoves.length-1].toCol===col+1) movesArray.push({row:row-1,col:col+1})
         }
-        if(forRealBoard) setAllPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}])
-        else setAllTempPossibleMovesForBlack((prev)=>[...prev,{piece:"p",posi:{row:row,col:col},moves:movesArray}])
+        if(forRealBoard) return {piece:"p",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+        else return {piece:"p",posi:{row:row,col:col},moves:movesArray}
     }
 
     //WHITE KNIGHT MOVES
@@ -585,9 +571,9 @@ const GamePage=()=>{
         }
 
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"N",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForWhite((prev) => {return [...prev,{piece:"N",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"N",posi:{row:row,col:col},moves:movesArray}
     }
 
     //BLACK KNIGHT MOVES
@@ -621,9 +607,9 @@ const GamePage=()=>{
         }
 
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForBlack((prev) => {return [...prev,{piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+        else return {piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
     }
 
     //WHITE ROOK MOVES
@@ -679,9 +665,9 @@ const GamePage=()=>{
             else break
         }
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"R",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"R",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"R",posi:{row:row,col:col},moves:movesArray}
     }
 
     //BLACK ROOK MOVES
@@ -737,9 +723,9 @@ const GamePage=()=>{
             else break
         }
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"r",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"r",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"r",posi:{row:row,col:col},moves:movesArray}
     }
 
     //WHITE BISHOP MOVES
@@ -805,9 +791,9 @@ const GamePage=()=>{
         col=tempCol
 
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"B",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"B",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"B",posi:{row:row,col:col},moves:movesArray}
     }
 
     //BLACK BISHOP MOVES
@@ -872,9 +858,9 @@ const GamePage=()=>{
         }
         col=tempCol
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
+            if(movesArray.length>0) return {piece:"b",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"b",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"b",posi:{row:row,col:col},moves:movesArray}
     }
 
     //WHITE QUEEN MOVES
@@ -990,10 +976,9 @@ const GamePage=()=>{
         }
         col=tempCol
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
-            setWhiteComp(true)
+            if(movesArray.length>0) return {piece:"Q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForWhite((prev)=>{return [...prev,{piece:"Q",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"Q",posi:{row:row,col:col},moves:movesArray}
     }
 
     //BLACK QUEEN MOVES
@@ -1110,10 +1095,9 @@ const GamePage=()=>{
         }
         col=tempCol
         if(forRealBoard){
-            if(movesArray.length>0) setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}]})
-            setBlackComp(true)
+            if(movesArray.length>0) return {piece:"q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
         }
-        else setAllTempPossibleMovesForBlack((prev)=>{return [...prev,{piece:"q",posi:{row:row,col:col},moves:movesArray}]})
+        else return {piece:"q",posi:{row:row,col:col},moves:movesArray}
     }
 
     const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
@@ -1236,8 +1220,8 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (whitePieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (whitePieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
         
-        if(whiteKingCastlePossible && whiteRookCastlePossible.left && !findThreatToWhiteKing(true,board) && !checkMiddleSquaresAttacked("white","left")) movesArray.push({row:row,col:col-2})
-        if(whiteKingCastlePossible && whiteRookCastlePossible.right && !findThreatToWhiteKing(true,board) && !checkMiddleSquaresAttacked("white","right")) movesArray.push({row:row,col:col+2})
+        if(whiteKingCastlePossible && whiteRookCastlePossible.left && !findThreatToWhiteKing(allPossibleMovesForBlack,board) && !checkMiddleSquaresAttacked("white","left")) movesArray.push({row:row,col:col-2})
+        if(whiteKingCastlePossible && whiteRookCastlePossible.right && !findThreatToWhiteKing(allPossibleMovesForBlack,board) && !checkMiddleSquaresAttacked("white","right")) movesArray.push({row:row,col:col+2})
 
         if((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0)){
             setAllPossibleMovesForWhite((prev)=>{return [...prev,{piece:"K",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
@@ -1382,8 +1366,8 @@ const GamePage=()=>{
         if(row+1<8 && col-1>=0 && (blackPieces.includes(board[row+1][col-1]))) protectedArray.push({row:row+1,col:col-1})
         if(row+1<8 && col+1<8 && (blackPieces.includes(board[row+1][col+1]))) protectedArray.push({row:row+1,col:col+1})
         
-        if(blackKingCastlePossible && blackRookCastlePossible.left && !findThreatToBlackKing(true,board) && !checkMiddleSquaresAttacked("black","left")) movesArray.push({row:row,col:col-2})
-        if(blackKingCastlePossible && blackRookCastlePossible.right && !findThreatToBlackKing(true,board) && !checkMiddleSquaresAttacked("black","right")) movesArray.push({row:row,col:col+2})
+        if(blackKingCastlePossible && blackRookCastlePossible.left && !findThreatToBlackKing(allPossibleMovesForWhite,board) && !checkMiddleSquaresAttacked("black","left")) movesArray.push({row:row,col:col-2})
+        if(blackKingCastlePossible && blackRookCastlePossible.right && !findThreatToBlackKing(allPossibleMovesForWhite,board) && !checkMiddleSquaresAttacked("black","right")) movesArray.push({row:row,col:col+2})
 
         if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
             setAllPossibleMovesForBlack((prev)=>{return [...prev,{piece:"k",posi:{row:row,col:col},moves:movesArray, protected:protectedArray}]})
@@ -1415,26 +1399,32 @@ const GamePage=()=>{
 
     //Now for each white piece selected find all the moves that are possible
     useEffect(()=>{
-        curWhite.forEach((key)=>{
-            if(key.piece==="P") findMovesForP(key.row,key.col,true,board)
-            if(key.piece==="N") findMovesForN(key.row,key.col,true,board)
-            if(key.piece==="R") findMovesForR(key.row,key.col,true,board)
-            if(key.piece==="B") findMovesForB(key.row,key.col,true,board)
-            if(key.piece==="Q") findMovesForQ(key.row,key.col,true,board)
+        setAllPossibleMovesForWhite([])
+        const arr:allPossibleMovesType[] = curWhite.map((key)=>{
+            if(key.piece==="P") return findMovesForP(key.row,key.col,true,board)
+            if(key.piece==="N") return findMovesForN(key.row,key.col,true,board)
+            if(key.piece==="R") return findMovesForR(key.row,key.col,true,board)
+            if(key.piece==="B") return findMovesForB(key.row,key.col,true,board)
+            if(key.piece==="Q") return findMovesForQ(key.row,key.col,true,board)
             if(key.piece==="K") findMovesForK(key.row,key.col)
-        })
+        }).filter((move): move is allPossibleMovesType => move !== undefined && move !== null)
+        setAllPossibleMovesForWhite(arr)
+        setWhiteComp(true)
     },[curWhite])
 
     //Now for each black piece selected find all the moves that are possible
     useEffect(()=>{
-        curBlack.forEach((key)=>{
-            if(key.piece==="p") findMovesForp(key.row,key.col,true,board)
-            if(key.piece==="n") findMovesForn(key.row,key.col,true,board)
-            if(key.piece==="r") findMovesForr(key.row,key.col,true,board)
-            if(key.piece==="b") findMovesForb(key.row,key.col,true,board)
-            if(key.piece==="q") findMovesForq(key.row,key.col,true,board)
+        setAllPossibleMovesForBlack([])
+        const arr:allPossibleMovesType[] = curBlack.map((key)=>{
+            if(key.piece==="p") return findMovesForp(key.row,key.col,true,board)
+            if(key.piece==="n") return findMovesForn(key.row,key.col,true,board)
+            if(key.piece==="r") return findMovesForr(key.row,key.col,true,board)
+            if(key.piece==="b") return findMovesForb(key.row,key.col,true,board)
+            if(key.piece==="q") return findMovesForq(key.row,key.col,true,board)
             if(key.piece==="k") findMovesFork(key.row,key.col)
-        })
+        }).filter((move): move is allPossibleMovesType => move !== undefined && move !== null)
+        setAllPossibleMovesForBlack(arr)
+        setBlackComp(true)
     },[curBlack])
 
     useEffect(()=>{
@@ -1501,7 +1491,7 @@ const GamePage=()=>{
                 handleAllWhitePieces()
                 handleAllBlackPieces()
             }
-    },[pieceColour,moves])
+    },[pieceColour,moves,board])
 
     return(
         <main className="h-full w-full">
@@ -1548,13 +1538,7 @@ const GamePage=()=>{
                                     <div key={i+""+j} className={`${(isSelected && selectedPiece.row===i && selectedPiece.col===j) ? "bg-blue-800" : (isSelected && possibleMovesForSelectedPiece.some(move => move.row===i && move.col===j)) ? `border-2 md:border-4 p-4 box-border rounded-full border-blue-800 ${(i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"}` : (i+j)%2==0 ? "bg-gray-400" : "bg-blue-500"} flex h-9 w-9 pt-1.5 md:pt-2 lg:pt-2.5 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14 xxl:h-16 xxl:w-16 justify-center`}
                                         onClick={()=>handleSelectedPiece(col,i,j)}
                                     >
-                                        {j === 0 && (
-                                            <div className="absolute top-0 left-0.5 lg:left-1 text-xxs lg:text-xs">{pieceColour===1 ? 8 - i : i + 1}</div>
-                                        )}
                                         <ChessPiece col={col} />
-                                        {i === 7 && (
-                                            <div className="absolute bottom-0 right-0.5 lg:right-1 text-xxs lg:text-xs">{pieceColour===1 ? String.fromCharCode(97 + j) : String.fromCharCode(104 - j)}</div>
-                                        )}
                                     </div>
                                     </div>
                                 ))}
