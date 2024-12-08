@@ -420,6 +420,9 @@ const GamePage=()=>{
             newBoard[newRow][newCol] = selPiece
             return newBoard
         })
+        
+        //increase the count of moves
+        setMoves((prev)=>prev+1)
 
     }
 
@@ -448,11 +451,64 @@ const GamePage=()=>{
             if(JSON.stringify(previousBoardPosi[0]) === JSON.stringify([]) && JSON.stringify(previousBoardPosi[1]) === JSON.stringify([])) setPreviousBoardPosi([[],board])
             else setPreviousBoardPosi([previousBoardPosi[1],board])
 
-            updateSelectedPiecePosition(selectedPiece.piece, selectedPiece.row, selectedPiece.col, i, j)
+            //create a temporary array to update the board position and check the if the king is in threat after a move is made
+            let updatedBoard:string[][] = [...board]
+            updatedBoard[selectedPiece.row] = [...board[selectedPiece.row]]
+            updatedBoard[i] = [...board[i]]
+            updatedBoard[selectedPiece.row][selectedPiece.col] = " "
+            updatedBoard[i][j] = selectedPiece.piece
+
+            //if it is enpassant move
+            if((pieceColour===1 && selectedPiece.piece==="P" && selectedPiece.row===3 && allMoves[allMoves.length-1].piece==="p" && i===2 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3)
+            || (pieceColour===1 && selectedPiece.piece==="p" && selectedPiece.row===4 && allMoves[allMoves.length-1].piece==="P" && i===5 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4)
+            || (pieceColour===0 && selectedPiece.piece==="P" && selectedPiece.row===4 && allMoves[allMoves.length-1].piece==="p" && i===5 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) 
+            ||  (pieceColour===0 && selectedPiece.piece==="p" && selectedPiece.row===3 && allMoves[allMoves.length-1].piece==="P" && i===2 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3))
+            {
+                updatedBoard[allMoves[allMoves.length-1].toRow][allMoves[allMoves.length-1].toCol] = " "
+            }
+
+            //for all the pieces check possible moves and find if opponent king is in threat
+            if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+                let arr:allTempPossibleMovesType[] = []
+                updatedBoard.map((r,rind)=>{
+                    r.map((c,cind)=>{
+                        if(blackPieces.includes(c)){
+                            if(c==="p") arr.push(findMovesForp(rind,cind,false,updatedBoard))
+                            if(c==="n") arr.push(findMovesForn(rind,cind,false,updatedBoard))
+                            if(c==="r") arr.push(findMovesForr(rind,cind,false,updatedBoard))
+                            if(c==="b") arr.push(findMovesForb(rind,cind,false,updatedBoard))
+                            if(c==="q") arr.push(findMovesForq(rind,cind,false,updatedBoard))
+                        }
+                    })
+                })
+                const ifWhiteKingInThreat = findThreatToWhiteKing(arr,updatedBoard)
+                if(!ifWhiteKingInThreat){
+                    updateSelectedPiecePosition(selectedPiece.piece, selectedPiece.row, selectedPiece.col, i, j)
+                }
+
+            }
+            else{
+                let arr:allTempPossibleMovesType[] = []
+                updatedBoard.map((r,rind)=>{
+                    r.map((c,cind)=>{
+                        if(whitePieces.includes(c)){
+                            if(c==="P") arr.push(findMovesForP(rind,cind,false,updatedBoard))
+                            if(c==="N") arr.push(findMovesForN(rind,cind,false,updatedBoard))
+                            if(c==="R") arr.push(findMovesForR(rind,cind,false,updatedBoard))
+                            if(c==="B") arr.push(findMovesForB(rind,cind,false,updatedBoard))
+                            if(c==="Q") arr.push(findMovesForQ(rind,cind,false,updatedBoard))
+                        }
+                    })
+                })
+                const ifBlackKingInThreat = findThreatToBlackKing(arr,updatedBoard)
+                if(!ifBlackKingInThreat){
+                    updateSelectedPiecePosition(selectedPiece.piece, selectedPiece.row, selectedPiece.col, i, j)
+                }
+            }
+
             setIsSelected(false)
             setSelectedPiece({piece:null,row:null,col:null})
             setPossibleMovesForSelectedPiece([])
-            setMoves((prev)=>prev+1)
         }
     }
 
@@ -572,6 +628,7 @@ const GamePage=()=>{
 
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"N",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"N",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"N",posi:{row:row,col:col},moves:movesArray}
     }
@@ -608,6 +665,7 @@ const GamePage=()=>{
 
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"n",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"n",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
     }
@@ -666,6 +724,7 @@ const GamePage=()=>{
         }
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"R",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"R",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"R",posi:{row:row,col:col},moves:movesArray}
     }
@@ -724,6 +783,7 @@ const GamePage=()=>{
         }
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"r",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"r",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"r",posi:{row:row,col:col},moves:movesArray}
     }
@@ -792,6 +852,7 @@ const GamePage=()=>{
 
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"B",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"B",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"B",posi:{row:row,col:col},moves:movesArray}
     }
@@ -859,6 +920,7 @@ const GamePage=()=>{
         col=tempCol
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"b",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"b",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"b",posi:{row:row,col:col},moves:movesArray}
     }
@@ -977,6 +1039,7 @@ const GamePage=()=>{
         col=tempCol
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"Q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"Q",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"Q",posi:{row:row,col:col},moves:movesArray}
     }
@@ -1096,6 +1159,7 @@ const GamePage=()=>{
         col=tempCol
         if(forRealBoard){
             if(movesArray.length>0) return {piece:"q",posi:{row:row,col:col},moves:movesArray,protected:protectedArray}
+            else return {piece:"q",posi:{row:row,col:col},moves:[],protected:protectedArray}
         }
         else return {piece:"q",posi:{row:row,col:col},moves:movesArray}
     }
