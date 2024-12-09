@@ -57,9 +57,9 @@ const GamePage=()=>{
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const pieceColour = searchParams ? Number(searchParams.get('pieceColour')) : 1
-    const time = searchParams ? Number(searchParams.get('time'))*60 : 30*60
-    const increment = searchParams ? Number(searchParams.get('increment')) : 0
+    const [pieceColour, setPieceColour] = useState(1)
+    const [time, setTime] = useState(30 * 60)
+    const [increment, setIncrement] = useState(0)
     const [moves,setMoves] = useState(pieceColour===1 ? 0 : 1)
     const [isSelected, setIsSelected] = useState(false)
     const [selectedPiece, setSelectedPiece] = useState<selectedPieceType>({piece: null,row: null,col: null})
@@ -111,6 +111,18 @@ const GamePage=()=>{
     const [previousBoardPosi, setPreviousBoardPosi] = useState<[string[][],string[][]]>([[],board])
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
+
+    useEffect(() => {
+        if (searchParams) {
+            const pieceColourParam = Number(searchParams.get('pieceColour'))
+            const timeParam = Number(searchParams.get('time')) * 60
+            const incrementParam = Number(searchParams.get('increment'))
+
+            setPieceColour(pieceColourParam || 1)
+            setTime(timeParam || 30 * 60)
+            setIncrement(incrementParam || 0)
+        }
+    }, [searchParams])
 
     //decrease the timer for players for each move
     useEffect(() => {
@@ -1849,6 +1861,7 @@ const GamePage=()=>{
 
     return(
         <main className="h-full w-full relative">
+            <Suspense fallback={<div>Loading game settings...</div>}>
             <div className="flex flex-col justify-center items-center p-2">
                 <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
                     {JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([]) ? <div className="border-2 border-blue-500 rounded-md bg-white transform scale-y-[-1] scale-x-[-1]" onClick={()=>setTopPlayerChoosePrev(true)}><MdSkipPrevious color="#3b82f6" size={30} /></div> : <div className="w-8"></div>}
@@ -1954,6 +1967,7 @@ const GamePage=()=>{
                     </div>
                 </div>
             }
+            </Suspense>
         </main>
     )
 }
