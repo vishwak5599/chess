@@ -53,7 +53,7 @@ type moveType = {
     toCol : number
 }
 
-const GamePage=()=>{
+const HomePageContent = () => {
 
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -1861,7 +1861,6 @@ const GamePage=()=>{
 
     return(
         <main className="h-full w-full relative">
-            <Suspense fallback={<div>Loading game settings...</div>}>
             <div className="flex flex-col justify-center items-center p-2">
                 <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
                     {JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([]) ? <div className="border-2 border-blue-500 rounded-md bg-white transform scale-y-[-1] scale-x-[-1]" onClick={()=>setTopPlayerChoosePrev(true)}><MdSkipPrevious color="#3b82f6" size={30} /></div> : <div className="w-8"></div>}
@@ -1967,9 +1966,14 @@ const GamePage=()=>{
                     </div>
                 </div>
             }
-            </Suspense>
         </main>
     )
 }
 
-export default GamePage
+export default function GamePage() {
+    return (
+      <Suspense fallback={<div>Loading Game...</div>}>
+        <HomePageContent />
+      </Suspense>
+    );
+  }
