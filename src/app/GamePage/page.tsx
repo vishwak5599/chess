@@ -1,7 +1,7 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 import { FaWindowClose } from "react-icons/fa"
@@ -1848,6 +1848,7 @@ const GamePage=()=>{
 
 
     return(
+        <Suspense fallback={<div>Loading...</div>}>
         <main className="h-full w-full relative">
             <div className="flex flex-col justify-center items-center p-2">
                 <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
@@ -1955,6 +1956,7 @@ const GamePage=()=>{
                 </div>
             }
         </main>
+        </Suspense>
     )
 }
 
