@@ -53,7 +53,7 @@ type moveType = {
     toCol : number
 }
 
-const HomePageContent = () => {
+const HomePageContent=()=>{
 
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -1970,10 +1970,10 @@ const HomePageContent = () => {
     )
 }
 
-export default function GamePage() {
-    return (
-      <Suspense fallback={<div>Loading Game...</div>}>
-        <HomePageContent />
-      </Suspense>
-    );
-  }
+export default function GamePage(){
+    return(
+        <Suspense fallback={<div>Loading...</div>}>
+            <HomePageContent />
+        </Suspense>
+    )
+}
