@@ -1,7 +1,7 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 import { FaWindowClose } from "react-icons/fa"
@@ -60,6 +60,10 @@ const GamePage=()=>{
     const pieceColour = searchParams ? Number(searchParams.get('pieceColour')) : 1
     const time = searchParams ? Number(searchParams.get('time'))*60 : 30*60
     const increment = searchParams ? Number(searchParams.get('increment')) : 0
+
+    if (!pieceColour || !time || !increment) {
+        return <div>Loading game...</div>
+    }
     const [moves,setMoves] = useState(pieceColour===1 ? 0 : 1)
     const [isSelected, setIsSelected] = useState(false)
     const [selectedPiece, setSelectedPiece] = useState<selectedPieceType>({piece: null,row: null,col: null})
@@ -1849,7 +1853,6 @@ const GamePage=()=>{
 
     return(
         <main className="h-full w-full relative">
-            <Suspense fallback={<div>Loading...</div>}>
             <div className="flex flex-col justify-center items-center p-2">
                 <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
                     {JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([]) ? <div className="border-2 border-blue-500 rounded-md bg-white transform scale-y-[-1] scale-x-[-1]" onClick={()=>setTopPlayerChoosePrev(true)}><MdSkipPrevious color="#3b82f6" size={30} /></div> : <div className="w-8"></div>}
@@ -1955,7 +1958,6 @@ const GamePage=()=>{
                     </div>
                 </div>
             }
-            </Suspense>
         </main>
     )
 }
