@@ -1,7 +1,7 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 import { FaWindowClose } from "react-icons/fa"
@@ -60,10 +60,6 @@ const GamePage=()=>{
     const pieceColour = searchParams ? Number(searchParams.get('pieceColour')) : 1
     const time = searchParams ? Number(searchParams.get('time'))*60 : 30*60
     const increment = searchParams ? Number(searchParams.get('increment')) : 0
-
-    if (!pieceColour || !time || !increment) {
-        return <div>Loading game...</div>
-    }
     const [moves,setMoves] = useState(pieceColour===1 ? 0 : 1)
     const [isSelected, setIsSelected] = useState(false)
     const [selectedPiece, setSelectedPiece] = useState<selectedPieceType>({piece: null,row: null,col: null})
