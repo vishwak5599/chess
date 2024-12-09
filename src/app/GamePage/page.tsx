@@ -57,9 +57,9 @@ const HomePageContent=()=>{
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const [pieceColour, setPieceColour] = useState(1)
-    const [time, setTime] = useState(30 * 60)
-    const [increment, setIncrement] = useState(0)
+    const pieceColour = searchParams ? Number(searchParams.get('pieceColour')) : 1
+    const time = searchParams ? Number(searchParams.get('time'))*60 : 30*60
+    const increment = searchParams ? Number(searchParams.get('increment')) : 0
     const [moves,setMoves] = useState(pieceColour===1 ? 0 : 1)
     const [isSelected, setIsSelected] = useState(false)
     const [selectedPiece, setSelectedPiece] = useState<selectedPieceType>({piece: null,row: null,col: null})
@@ -111,18 +111,6 @@ const HomePageContent=()=>{
     const [previousBoardPosi, setPreviousBoardPosi] = useState<[string[][],string[][]]>([[],board])
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
-
-    useEffect(() => {
-        if (searchParams) {
-            const pieceColourParam = Number(searchParams.get('pieceColour'))
-            const timeParam = Number(searchParams.get('time')) * 60
-            const incrementParam = Number(searchParams.get('increment'))
-
-            setPieceColour(pieceColourParam || 1)
-            setTime(timeParam || 30 * 60)
-            setIncrement(incrementParam || 0)
-        }
-    }, [searchParams])
 
     //decrease the timer for players for each move
     useEffect(() => {
