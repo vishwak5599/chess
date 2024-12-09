@@ -1,9 +1,10 @@
 "use client"
 import ChessPiece from "@/Components/ChessPiece"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
+import { FaWindowClose } from "react-icons/fa"
 
 type selectedPieceType = {
     piece : string | null
@@ -53,6 +54,7 @@ type moveType = {
 
 const GamePage=()=>{
 
+    const router = useRouter()
     const searchParams = useSearchParams()
     const pieceColour = searchParams ? Number(searchParams.get('pieceColour')) : 1
     const time = searchParams ? Number(searchParams.get('time'))*60 : 30*60
@@ -73,6 +75,30 @@ const GamePage=()=>{
     const [whiteRookCastlePossible,setWhiteRookCastlePossible] = useState({left:true,right:true})
     const [blackRookCastlePossible,setBlackRookCastlePossible] = useState({left:true,right:true})
     const [allMoves, setAllMoves] = useState<moveType[]>([])
+    const [whiteWon, setWhiteWon] = useState(false)
+    const [blackWon, setBlackWon] = useState(false)
+    const [staleMateWhiteWon, setStaleMateWhiteWon] = useState(false)
+    const [staleMateBlackWon, setStaleMateBlackWon] = useState(false)
+    const [draw, setDraw] = useState(false)
+    const [iconSize, setIconSize] = useState(20)
+    const [pauseTheBoard, setPauseTheBoard] = useState(false)
+    const [whitePlayerTime, setWhitePlayerTime] = useState(time)
+    const [blackPlayerTime, setBlackPlayerTime] = useState(time)
+
+    useEffect(()=>{
+        let timeOutId
+        if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+            setTimeout(()=>{
+                setWhitePlayerTime((prev)=>prev-1)
+            },1000)
+        }
+        else{
+            setTimeout(()=>{
+                setBlackPlayerTime((prev)=>prev-1)
+            },1000)
+        }
+        return ()=>clearTimeout(timeOutId)
+    },[pieceColour,moves])
 
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -98,6 +124,227 @@ const GamePage=()=>{
     const [previousBoardPosi, setPreviousBoardPosi] = useState<[string[][],string[][]]>([[],board])
     const whitePieces = ["R","N","B","Q","K","P"]
     const blackPieces = ["r","n","b","q","k","p"]
+
+    //decrease the timer for players for each move
+    useEffect(() => {
+        let intervalId:any
+        if (((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)) && !(draw || staleMateWhiteWon || staleMateBlackWon || whiteWon || blackWon)) {
+            if(whitePlayerTime>0){
+                intervalId = setInterval(()=>{
+                    setWhitePlayerTime((prev)=>prev-1)
+                }, 1000)
+                //increement
+                if(moves>1) setBlackPlayerTime((prev)=>prev+increment);
+                
+            }
+        } else if(((pieceColour===1 && moves%2!==0) || (pieceColour===0 && moves%2===0)) && !(draw || staleMateWhiteWon || staleMateBlackWon || whiteWon || blackWon)) {
+            if(blackPlayerTime>0){
+                intervalId = setInterval(()=>{
+                    setBlackPlayerTime((prev)=>prev-1)
+                }, 1000)
+                //increment
+                if(moves>0) setWhitePlayerTime((prev)=>prev+increment);
+            }
+        }
+    
+        return ()=>clearInterval(intervalId)
+    }, [pieceColour,moves,draw,staleMateBlackWon,staleMateWhiteWon,whiteWon,blackWon])
+
+    useEffect(()=>{
+        if(whitePlayerTime===0 && blackPlayerTime>0){
+            setBlackWon(true)
+        }
+        else if(blackPlayerTime===0 && whitePlayerTime>0){
+            setWhiteWon(true)
+        }
+    },[whitePlayerTime,blackPlayerTime])
+
+    //update width
+    useEffect(() => {
+        const updateSize = () => {
+        const width = window.innerWidth
+            if (width<640) {
+                setIconSize(20)
+            } else if (width<768) {
+                setIconSize(24)
+            } else if (width<1024) {
+                setIconSize(26)
+            }
+            else {
+                setIconSize(28)
+            }
+        }
+        updateSize()
+        window.addEventListener("resize", updateSize)
+        return ()=>window.removeEventListener("resize", updateSize)
+    }, [])
+
+    //if the match is ended and player wants to undo the move and continue
+    const handleCloseTheMatchOverDiv = () => {
+        if(draw) setDraw(false)
+        else if(staleMateWhiteWon) setStaleMateWhiteWon(false)
+        else if(staleMateBlackWon) setStaleMateBlackWon(false)
+        else if(whiteWon) setWhiteWon(false)
+        else if(blackWon) setBlackWon(false)
+
+        setPauseTheBoard(true)
+    }
+
+    useEffect(()=>{
+        if(pauseTheBoard) setPauseTheBoard(false)
+    },[board])
+
+    //ways of draw
+
+    //if there is no pieces on board other than kings
+    useEffect(()=>{
+        let flag = false
+        outerLoop : for(let i=0;i<board.length;i++){
+            for(let j=0;j<board[0].length;j++){
+                if(board[i][j]!==" " && board[i][j]!=="K" && board[i][j]!=="k"){
+                    flag=true
+                    break outerLoop
+                }
+            }
+        }
+        if(flag===false) setDraw(true)
+    },[board])
+
+    //if position is repeated three times
+    useEffect(()=>{
+        if(allMoves.length>9){
+            if((allMoves[allMoves.length-9].toRow===allMoves[allMoves.length-5].toRow) && 
+            (allMoves[allMoves.length-9].toCol===allMoves[allMoves.length-5].toCol) && 
+            (allMoves[allMoves.length-5].toRow===allMoves[allMoves.length-1].toRow) &&
+            (allMoves[allMoves.length-5].toCol===allMoves[allMoves.length-1].toCol) && 
+            (allMoves[allMoves.length-8].toRow===allMoves[allMoves.length-4].toRow) &&
+            (allMoves[allMoves.length-8].toCol===allMoves[allMoves.length-4].toCol) &&
+            (allMoves[allMoves.length-6].toRow===allMoves[allMoves.length-2].toRow) &&
+            (allMoves[allMoves.length-6].toCol===allMoves[allMoves.length-2].toCol) &&
+            (allMoves[allMoves.length-7].toRow===allMoves[allMoves.length-3].toRow) &&
+            (allMoves[allMoves.length-7].toCol===allMoves[allMoves.length-3].toCol)){
+                setDraw(true)
+            }
+        }
+    },[moves, allMoves])
+
+    //need to create a button if player wants to draw or agrees a draw
+
+    //**check if anyone won or there is any stalemate and make it a draw */
+    useEffect(()=>{
+        if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
+            const ifWhiteKingInThreat = findThreatToWhiteKing(allPossibleMovesForBlack,board)
+            if(ifWhiteKingInThreat){
+                const whiteKingPiece = allPossibleMovesForWhite.find((piece) => piece.piece === "K")
+                let flag = false
+                if (whiteKingPiece && whiteKingPiece.moves.length === 0) {
+                    outerLoop: for (const piece of allPossibleMovesForWhite) {
+                        for (const move of piece.moves) {
+                            let updatedBoard:string[][] = [...board]
+                            updatedBoard[piece.posi.row] = [...board[piece.posi.row]]
+                            updatedBoard[move.row] = [...board[move.row]]
+                            updatedBoard[piece.posi.row][piece.posi.col] = " "
+                            updatedBoard[move.row][move.col] = piece.piece
+                            if((pieceColour===1 && piece.piece==="P" && piece.posi.row===3 && allMoves[allMoves.length-1].piece==="p" && move.row===2 && move.col===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3) ||
+                                (pieceColour===0 && piece.piece==="P" && piece.posi.row===4 && allMoves[allMoves.length-1].piece==="p" && move.row===5 && move.col===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4))
+                            {
+                                updatedBoard[allMoves[allMoves.length-1].toRow][allMoves[allMoves.length-1].toCol] = " "
+                            }
+                            let arr:allTempPossibleMovesType[] = []
+                            updatedBoard.map((r,rind)=>{
+                                r.map((c,cind)=>{
+                                    if(blackPieces.includes(c)){
+                                        if(c==="p") arr.push(findMovesForp(rind,cind,false,updatedBoard))
+                                        if(c==="n") arr.push(findMovesForn(rind,cind,false,updatedBoard))
+                                        if(c==="r") arr.push(findMovesForr(rind,cind,false,updatedBoard))
+                                        if(c==="b") arr.push(findMovesForb(rind,cind,false,updatedBoard))
+                                        if(c==="q") arr.push(findMovesForq(rind,cind,false,updatedBoard))
+                                    }
+                                })
+                            })
+                            const afterMoveIfWhiteKingInThreat = findThreatToWhiteKing(arr,updatedBoard)
+                            if(!afterMoveIfWhiteKingInThreat){
+                                flag=true
+                                break outerLoop
+                            }
+                        }
+                    }
+                    if(flag===false){
+                        setBlackWon(true)
+                    }
+                }
+            }
+            else{
+                const whiteKingPiece = allPossibleMovesForWhite.find((piece) => piece.piece === "K")
+                let flag = false
+                if (whiteKingPiece && whiteKingPiece.moves.length === 0) {
+                    outerLoop: for (const piece of allPossibleMovesForWhite) {
+                        if(piece.moves.length>0){
+                            flag=true
+                            break outerLoop
+                        }
+                    }
+                    if(flag===false) setStaleMateWhiteWon(true)
+                }
+            }
+        }
+        else{
+            const ifBlackKingInThreat = findThreatToBlackKing(allPossibleMovesForWhite,board)
+            if(ifBlackKingInThreat){
+                const blackKingPiece = allPossibleMovesForBlack.find((piece) => piece.piece === "k")
+                let flag = false
+                if (blackKingPiece && blackKingPiece.moves.length === 0) {
+                    outerLoop: for (const piece of allPossibleMovesForBlack) {
+                        for (const move of piece.moves) {
+                            let updatedBoard:string[][] = [...board]
+                            updatedBoard[piece.posi.row] = [...board[piece.posi.row]]
+                            updatedBoard[move.row] = [...board[move.row]]
+                            updatedBoard[piece.posi.row][piece.posi.col] = " "
+                            updatedBoard[move.row][move.col] = piece.piece
+                            if((pieceColour===1 && piece.piece==="p" && piece.posi.row===4 && allMoves[allMoves.length-1].piece==="P" && move.row===5 && move.col===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) ||
+                                (pieceColour===0 && piece.piece==="p" && piece.posi.row===3 && allMoves[allMoves.length-1].piece==="P" && move.row===2 && move.col===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3))
+                            {
+                                updatedBoard[allMoves[allMoves.length-1].toRow][allMoves[allMoves.length-1].toCol] = " "
+                            }
+                            let arr:allTempPossibleMovesType[] = []
+                            updatedBoard.map((r,rind)=>{
+                                r.map((c,cind)=>{
+                                    if(whitePieces.includes(c)){
+                                        if(c==="P") arr.push(findMovesForP(rind,cind,false,updatedBoard))
+                                        if(c==="N") arr.push(findMovesForN(rind,cind,false,updatedBoard))
+                                        if(c==="R") arr.push(findMovesForR(rind,cind,false,updatedBoard))
+                                        if(c==="B") arr.push(findMovesForB(rind,cind,false,updatedBoard))
+                                        if(c==="Q") arr.push(findMovesForQ(rind,cind,false,updatedBoard))
+                                    }
+                                })
+                            })
+                            const afterMoveIfBlackKingInThreat = findThreatToBlackKing(arr,updatedBoard)
+                            if(!afterMoveIfBlackKingInThreat){
+                                flag=true
+                                break outerLoop
+                            }
+                        }
+                    }
+                    if(flag===false){
+                        setWhiteWon(true)
+                    }
+                }
+            }
+            else{
+                const blackKingPiece = allPossibleMovesForWhite.find((piece) => piece.piece === "k")
+                let flag = false
+                if (blackKingPiece && blackKingPiece.moves.length === 0) {
+                    outerLoop: for (const piece of allPossibleMovesForBlack) {
+                        if(piece.moves.length>0){
+                            flag=true
+                            break outerLoop
+                        }
+                    }
+                    if(flag===false) setStaleMateBlackWon(true)
+                }
+            }
+        }
+    },[moves,board,allPossibleMovesForBlack,allPossibleMovesForWhite])
 
     //function to find if White King is in threat
     const findThreatToWhiteKing = (moves:allPossibleMovesType[] | allTempPossibleMovesType[], custBoard:string[][]) => {
@@ -460,7 +707,7 @@ const GamePage=()=>{
             if((pieceColour===1 && selectedPiece.piece==="P" && selectedPiece.row===3 && allMoves[allMoves.length-1].piece==="p" && i===2 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3)
             || (pieceColour===1 && selectedPiece.piece==="p" && selectedPiece.row===4 && allMoves[allMoves.length-1].piece==="P" && i===5 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4)
             || (pieceColour===0 && selectedPiece.piece==="P" && selectedPiece.row===4 && allMoves[allMoves.length-1].piece==="p" && i===5 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===4) 
-            ||  (pieceColour===0 && selectedPiece.piece==="p" && selectedPiece.row===3 && allMoves[allMoves.length-1].piece==="P" && i===2 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3))
+            || (pieceColour===0 && selectedPiece.piece==="p" && selectedPiece.row===3 && allMoves[allMoves.length-1].piece==="P" && i===2 && j===allMoves[allMoves.length-1].toCol && allMoves[allMoves.length-1].toRow===3))
             {
                 updatedBoard[allMoves[allMoves.length-1].toRow][allMoves[allMoves.length-1].toCol] = " "
             }
@@ -1162,8 +1409,8 @@ const GamePage=()=>{
         else return {piece:"q",posi:{row:row,col:col},moves:movesArray}
     }
 
-    const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
-        const removeMoves:{ row: number; col: number }[] = []
+    const filterMovesForWhiteKing = (row:number, col:number, movesArray: { row: number, col: number }[]) => {
+        const removeMoves:{ row: number, col: number }[] = []
         const filteredMovesArray = movesArray.filter((move) => {
             return !allPossibleMovesForBlack.some((expiece) => {
                 if (expiece.piece === "p") {
@@ -1292,7 +1539,28 @@ const GamePage=()=>{
         }
         else{
             const filteredMovesArray = filterMovesForWhiteKing(row,col,movesArray)
-            const newFilteredMovesArray = filteredMovesArray.filter((move)=>(!allPossibleMovesForBlack.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            const newFilteredMovesArray1 = filteredMovesArray.filter((move)=>(!allPossibleMovesForBlack.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            let blackKingRow=0, blackKingCol=0
+            board.forEach((r,i)=>{
+                r.forEach((c,j)=>{
+                    if(c==="k"){
+                        blackKingRow=i
+                        blackKingCol=j
+                    }
+                })
+            })
+            let arr:{row:number,col:number}[] = []
+            if(blackKingCol-1>=0) arr.push({row:blackKingRow,col:blackKingCol-1})
+            if(blackKingCol+1<8) arr.push({row:blackKingRow,col:blackKingCol+1})
+            if(blackKingRow-1>=0) arr.push({row:blackKingRow-1,col:blackKingCol})
+            if(blackKingRow+1<8) arr.push({row:blackKingRow+1,col:blackKingCol})
+            if(blackKingRow-1>=0 && blackKingCol-1>=0) arr.push({row:blackKingRow-1,col:blackKingCol-1})
+            if(blackKingRow+1<8 && blackKingCol-1>=0) arr.push({row:blackKingRow+1,col:blackKingCol-1})
+            if(blackKingRow-1>=0 && blackKingCol+1<8) arr.push({row:blackKingRow-1,col:blackKingCol+1})
+            if(blackKingRow+1<8 && blackKingCol+1<8) arr.push({row:blackKingRow+1,col:blackKingCol+1})
+            
+            const newFilteredMovesArray = newFilteredMovesArray1.filter((move)=>(!arr.some((piece)=>piece.row===move.row && piece.col===move.col)))
+
             if(newFilteredMovesArray.length>0){
                 if(allPossibleMovesForWhite.some((piece)=>piece.piece==="K")){
                     setAllPossibleMovesForWhite((prev)=>{return prev.map((piece) => { return piece.piece === "K" ? { piece: "K", posi: { row: row, col: col }, moves: newFilteredMovesArray, protected:protectedArray } : piece })})
@@ -1313,7 +1581,7 @@ const GamePage=()=>{
     }
 
     const filterMovesForBlackKing = (row:number, col:number, movesArray: { row: number; col: number }[]) => {
-        const removeMoves:{ row: number; col: number }[] = []
+        const removeMoves:{ row: number, col: number }[] = []
         const filteredMovesArray = movesArray.filter((move) => {
             return !allPossibleMovesForWhite.some((expiece) => {
                 if (expiece.piece === "P") {
@@ -1395,6 +1663,20 @@ const GamePage=()=>{
                         (exmove) => exmove.row === move.row && exmove.col === move.col
                     )
                 }
+                else if(expiece.piece==="K"){
+                    let arr:{row:number,col:number}[] = []
+                    if(expiece.posi.col-1>=0) arr.push({row:expiece.posi.row,col:expiece.posi.col-1})
+                    if(expiece.posi.col+1<8) arr.push({row:expiece.posi.row,col:expiece.posi.col+1})
+                    if(expiece.posi.row-1>=0) arr.push({row:expiece.posi.row-1,col:expiece.posi.col})
+                    if(expiece.posi.row+1<8) arr.push({row:expiece.posi.row+1,col:expiece.posi.col})
+                    if(expiece.posi.col-1>=0 && expiece.posi.row-1>=0) arr.push({row:expiece.posi.row-1,col:expiece.posi.col-1})
+                    if(expiece.posi.row+1<8 && expiece.posi.col-1>=0) arr.push({row:expiece.posi.row+1,col:expiece.posi.col-1})
+                    if(expiece.posi.row-1>=0 && expiece.posi.col+1<8) arr.push({row:expiece.posi.row-1,col:expiece.posi.col+1})
+                    if(expiece.posi.row+1<8 && expiece.posi.col+1<8) arr.push({row:expiece.posi.row+1,col:expiece.posi.col+1})
+                    return !arr.some(
+                        (attack) => attack.row === move.row && attack.col === move.col
+                    )
+                }
                 else {
                     return expiece.moves.some(
                         (exmove) => exmove.row === move.row && exmove.col === move.col
@@ -1440,7 +1722,28 @@ const GamePage=()=>{
         }
         else{
             const filteredMovesArray = filterMovesForBlackKing(row,col,movesArray)
-            const newFilteredMovesArray = filteredMovesArray.filter((move)=>(!allPossibleMovesForWhite.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            const newFilteredMovesArray1 = filteredMovesArray.filter((move)=>(!allPossibleMovesForWhite.some((piece)=>piece.protected.some((m)=>m.row===move.row && m.col===move.col))))
+            let whiteKingRow=0, whiteKingCol=0
+            board.forEach((r,i)=>{
+                r.forEach((c,j)=>{
+                    if(c==="K"){
+                        whiteKingRow=i
+                        whiteKingCol=j
+                    }
+                })
+            })
+            let arr:{row:number,col:number}[] = []
+            if(whiteKingCol-1>=0) arr.push({row:whiteKingRow,col:whiteKingCol-1})
+            if(whiteKingCol+1<8) arr.push({row:whiteKingRow,col:whiteKingCol+1})
+            if(whiteKingRow-1>=0) arr.push({row:whiteKingRow-1,col:whiteKingCol})
+            if(whiteKingRow+1<8) arr.push({row:whiteKingRow+1,col:whiteKingCol})
+            if(whiteKingRow-1>=0 && whiteKingCol-1>=0) arr.push({row:whiteKingRow-1,col:whiteKingCol-1})
+            if(whiteKingRow+1<8 && whiteKingCol-1>=0) arr.push({row:whiteKingRow+1,col:whiteKingCol-1})
+            if(whiteKingRow-1>=0 && whiteKingCol+1<8) arr.push({row:whiteKingRow-1,col:whiteKingCol+1})
+            if(whiteKingRow+1<8 && whiteKingCol+1<8) arr.push({row:whiteKingRow+1,col:whiteKingCol+1})
+            
+            const newFilteredMovesArray = newFilteredMovesArray1.filter((move)=>(!arr.some((piece)=>piece.row===move.row && piece.col===move.col)))
+
             if(newFilteredMovesArray.length>0){
                 if(allPossibleMovesForBlack.some((piece)=>piece.piece==="k")){
                     setAllPossibleMovesForBlack((prev)=>{return prev.map((piece) => { return piece.piece === "k" ? { piece: "k", posi: { row: row, col: col }, moves: newFilteredMovesArray, protected:protectedArray } : piece })})
@@ -1518,14 +1821,14 @@ const GamePage=()=>{
     // Function to select all the white pieces present on the board
     const handleAllWhitePieces = () => {
         setCurWhite([])
-        const newCurWhite: { piece: string; row: number; col: number }[] = []
+        const newCurWhite: { piece: string, row: number, col: number }[] = []
         board.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (whitePieces.includes(y)) {
                     newCurWhite.push({ piece: y, row: i, col: j })
                 }
-            });
-        });
+            })
+        })
         setCurWhite(newCurWhite)
     }
 
@@ -1536,10 +1839,10 @@ const GamePage=()=>{
         board.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (blackPieces.includes(y)) {
-                    newCurBlack.push({ piece: y, row: i, col: j });
+                    newCurBlack.push({ piece: y, row: i, col: j })
                 }
-            });
-        });
+            })
+        })
         setCurBlack(newCurBlack)
     }
 
@@ -1559,16 +1862,34 @@ const GamePage=()=>{
             }
     },[pieceColour,moves,board])
 
+
     return(
-        <main className="h-full w-full">
+        <main className="h-full w-full relative">
             <div className="flex flex-col justify-center items-center p-2">
                 <div className="flex justify-center items-center gap-3 ml-[48%] md:ml-[22%] mb-1">
                     {JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([]) ? <div className="border-2 border-blue-500 rounded-md bg-white transform scale-y-[-1] scale-x-[-1]" onClick={()=>setTopPlayerChoosePrev(true)}><MdSkipPrevious color="#3b82f6" size={30} /></div> : <div className="w-8"></div>}
                     <div key="sw-1" className={`${pieceColour===1 ? `${moves%2!==0 ? "bg-black" : "bg-gray-600"} text-white` : "bg-white text-black"} flex justify-center items-center border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2 transform scale-y-[-1] scale-x-[-1]`}>
-                        <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                        (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                        : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}
-                        </div>
+                        {(pieceColour===1) ? (
+                            <div>
+                                {blackPlayerTime < 60 ? (
+                                    `00 : 00 : ${blackPlayerTime < 10 ? `0${blackPlayerTime}` : blackPlayerTime}`
+                                ) : blackPlayerTime < 3600 ? (
+                                    `00 : ${Math.floor(blackPlayerTime / 60) < 10 ? `0${Math.floor(blackPlayerTime / 60)}` : Math.floor(blackPlayerTime / 60)} : ${blackPlayerTime % 60 < 10 ? `0${blackPlayerTime % 60}` : blackPlayerTime % 60}`
+                                ) : (
+                                    `${Math.floor(blackPlayerTime / 3600)} : ${Math.floor((blackPlayerTime / 60) % 60) < 10 ? `0${Math.floor((blackPlayerTime / 60) % 60)}` : Math.floor((blackPlayerTime / 60) % 60)} : ${blackPlayerTime % 60 < 10 ? `0${blackPlayerTime % 60}` : blackPlayerTime % 60}`
+                                )}
+                            </div>
+                        ) : (
+                            <div>
+                                {whitePlayerTime < 60 ? (
+                                    `00 : 00 : ${whitePlayerTime < 10 ? `0${whitePlayerTime}` : whitePlayerTime}`
+                                ) : whitePlayerTime < 3600 ? (
+                                    `00 : ${Math.floor(whitePlayerTime / 60) < 10 ? `0${Math.floor(whitePlayerTime / 60)}` : Math.floor(whitePlayerTime / 60)} : ${whitePlayerTime % 60 < 10 ? `0${whitePlayerTime % 60}` : whitePlayerTime % 60}`
+                                ) : (
+                                    `${Math.floor(whitePlayerTime / 3600)} : ${Math.floor((whitePlayerTime / 60) % 60) < 10 ? `0${Math.floor((whitePlayerTime / 60) % 60)}` : Math.floor((whitePlayerTime / 60) % 60)} : ${whitePlayerTime % 60 < 10 ? `0${whitePlayerTime % 60}` : whitePlayerTime % 60}`
+                                )}
+                            </div>
+                        )}
                         <div className="w-5">{moves%2!==0 ? <FaStopwatch color={`${pieceColour===1 ? "white" : "black"}`} /> : ""}</div>
                     </div>
                 </div>
@@ -1596,7 +1917,7 @@ const GamePage=()=>{
                         </div>
                     </div> : ""
                     }
-                    <div>
+                    <div className={`${pauseTheBoard ? "pointer-events-none" : ""}`}>
                         {board.map((row,i)=>(
                             <div key={i} className="flex justify-center">
                                 {row.map((col,j)=>(
@@ -1616,12 +1937,39 @@ const GamePage=()=>{
                     {(JSON.stringify(previousBoardPosi[0])!==JSON.stringify([]) && JSON.stringify(previousBoardPosi[1])!==JSON.stringify([])) ? <div className="border-2 border-blue-500 rounded-md bg-white"><MdSkipPrevious color="#3b82f6" size={30} onClick={()=>setBotPlayerChoosePrev(true)}/></div> : <div className="w-8"></div>}
                     <div key="sw-2" className={`${pieceColour===1 ? `${moves%2===0 ? "bg-white" : "bg-slate-500"} text-black` : "bg-black text-white"} flex justify-center items-center border-2 border-blue-500 font-bold font-technology text-base md:text-xl p-1 rounded-md gap-2`}>
                         <div className="w-5">{moves%2===0 ? <FaStopwatch color={`${pieceColour===1 ? "black" : "white"}`} /> : ""}</div>
-                        <div className="">{(Math.floor(time/60)===0) ? `00 : 00:${time}` : 
-                        (Math.floor(time/3600)===0) ? `00 : ${time/60<10 ? `0${time/60}` :time/60} : ${time%60<10 ? `0${time%60}` : time%60}`
-                        : `0${Math.floor(time/3600)} : ${(Math.floor(time/60)%60)<10 ? `0${(Math.floor(time/60)%60)}` : (Math.floor(time/60)%60)} : ${time%60<10 ? `0${time%60}` : time%60}`}</div>
+                        {(pieceColour===1) ? (
+                            <div>
+                                {whitePlayerTime < 60 ? (
+                                    `00 : 00 : ${whitePlayerTime < 10 ? `0${whitePlayerTime}` : whitePlayerTime}`
+                                ) : whitePlayerTime < 3600 ? (
+                                    `00 : ${Math.floor(whitePlayerTime / 60) < 10 ? `0${Math.floor(whitePlayerTime / 60)}` : Math.floor(whitePlayerTime / 60)} : ${whitePlayerTime % 60 < 10 ? `0${whitePlayerTime % 60}` : whitePlayerTime % 60}`
+                                ) : (
+                                    `${Math.floor(whitePlayerTime / 3600)} : ${Math.floor((whitePlayerTime / 60) % 60) < 10 ? `0${Math.floor((whitePlayerTime / 60) % 60)}` : Math.floor((whitePlayerTime / 60) % 60)} : ${whitePlayerTime % 60 < 10 ? `0${whitePlayerTime % 60}` : whitePlayerTime % 60}`
+                                )}
+                            </div>
+                        ) : (
+                            <div>
+                                {blackPlayerTime < 60 ? (
+                                    `00 : 00 : ${blackPlayerTime < 10 ? `0${blackPlayerTime}` : blackPlayerTime}`
+                                ) : blackPlayerTime < 3600 ? (
+                                    `00 : ${Math.floor(blackPlayerTime / 60) < 10 ? `0${Math.floor(blackPlayerTime / 60)}` : Math.floor(blackPlayerTime / 60)} : ${blackPlayerTime % 60 < 10 ? `0${blackPlayerTime % 60}` : blackPlayerTime % 60}`
+                                ) : (
+                                    `${Math.floor(blackPlayerTime / 3600)} : ${Math.floor((blackPlayerTime / 60) % 60) < 10 ? `0${Math.floor((blackPlayerTime / 60) % 60)}` : Math.floor((blackPlayerTime / 60) % 60)} : ${blackPlayerTime % 60 < 10 ? `0${blackPlayerTime % 60}` : blackPlayerTime % 60}`
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+            {(draw || whiteWon || blackWon || staleMateWhiteWon || staleMateBlackWon) &&
+                <div className="absolute top-[32.5%] left-[25%] md:top-[30%] md:left-[34%] lg:top-[28%] lg:left-[37.5%] inset-0 bg-white border-4 border-blue-500 justify-center items-center h-[35%] w-[50%] md:h-[40%] md:w-[32%] lg:h-[45%] lg:w-[25%] rounded-lg">
+                    <div className="flex justify-end mt-2 mr-2 md:mt-3 md:mr-3 lg:mt-4 lg:mr-4"><button onClick={()=>handleCloseTheMatchOverDiv()}><FaWindowClose color="#3b82f6" size={iconSize}/></button></div>
+                    <div className="flex flex-col gap-4 lg:gap-6 justify-center items-center mt-4 lg:mt-6">
+                        <div className="text-base md:text-lg lg:text-3xl font-extrabold text-center text-blue-500">{draw ? "DRAW!!" : (staleMateWhiteWon || staleMateBlackWon) ? "DRAW BY STALEMATE" : whiteWon ? <div className="flex flex-col"><div>VICTORY</div><div>WHITE WON</div></div> : blackWon ? <div className="flex flex-col"><div>VICTORY</div><div>BLACK WON</div></div> : ""}</div>
+                        <button onClick={()=>router.push("/")} className="text-sm md:text-base lg:text-xl font-extrabold text-black border-blue-500 p-1 md:p-2 border-4 rounded-lg hover:scale-105">GO BACK</button>
+                    </div>
+                </div>
+            }
         </main>
     )
 }
