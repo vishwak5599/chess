@@ -127,7 +127,7 @@ const GamePage=()=>{
 
     //decrease the timer for players for each move
     useEffect(() => {
-        let intervalId:any
+        let intervalId:NodeJS.Timeout
         if (((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)) && !(draw || staleMateWhiteWon || staleMateBlackWon || whiteWon || blackWon)) {
             if(whitePlayerTime>0){
                 intervalId = setInterval(()=>{
