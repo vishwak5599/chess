@@ -1,20 +1,13 @@
 import { useEffect, useState } from "react"
 import { FaChessRook, FaChessKnight, FaChessBishop, FaChessQueen, FaChessKing, FaChessPawn } from "react-icons/fa"
+import useWindowSize from './UseWindowSize'
 
 type ChessPieceType = {
     col : string
 }
 const ChessPiece:React.FC<ChessPieceType> = ({col}) => {
 
-    const [windowSize, setWindowSize] = useState(window.innerWidth)
-
-    //update the window size if size changes
-    useEffect(()=>{
-        const handleResize = () => setWindowSize(window.innerWidth)
-        
-        window.addEventListener('resize',handleResize)
-        return ()=> window.removeEventListener('resize',handleResize)
-    },[window.innerWidth])
+    const windowSize = useWindowSize()
 
     const getSize = () =>{
         return windowSize<640 ? 24 : windowSize<768 ? 26 : windowSize<1024 ? 28 : windowSize<1128 ? 34 : windowSize<1440 ? 36 : windowSize<1800 ? 40 : 42

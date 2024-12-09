@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { FaStopwatch } from "react-icons/fa6"
 import { MdSkipPrevious } from "react-icons/md"
 import { FaWindowClose } from "react-icons/fa"
+import useWindowSize from '../../Components/UseWindowSize'
 
 type selectedPieceType = {
     piece : string | null
@@ -84,6 +85,7 @@ const GamePage=()=>{
     const [pauseTheBoard, setPauseTheBoard] = useState(false)
     const [whitePlayerTime, setWhitePlayerTime] = useState(time)
     const [blackPlayerTime, setBlackPlayerTime] = useState(time)
+    const windowSize = useWindowSize()
 
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -147,12 +149,11 @@ const GamePage=()=>{
     //update width
     useEffect(() => {
         const updateSize = () => {
-        const width = window.innerWidth
-            if (width<640) {
+            if (windowSize<640) {
                 setIconSize(20)
-            } else if (width<768) {
+            } else if (windowSize<768) {
                 setIconSize(24)
-            } else if (width<1024) {
+            } else if (windowSize<1024) {
                 setIconSize(26)
             }
             else {
@@ -160,9 +161,7 @@ const GamePage=()=>{
             }
         }
         updateSize()
-        window.addEventListener("resize", updateSize)
-        return ()=>window.removeEventListener("resize", updateSize)
-    }, [])
+    }, [windowSize])
 
     //if the match is ended and player wants to undo the move and continue
     const handleCloseTheMatchOverDiv = () => {

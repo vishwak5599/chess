@@ -8,28 +8,22 @@ import { LuAlarmClock } from "react-icons/lu"
 import { IoMdArrowDropupCircle, IoMdArrowDropdownCircle } from "react-icons/io"
 import { AiFillThunderbolt } from "react-icons/ai"
 import { RiArrowDropRightLine, RiArrowDropUpLine, RiArrowDropDownLine } from "react-icons/ri"
+import useWindowSize from './UseWindowSize'
 
 
 const SelectColourPage=()=>{
+    const windowSize = useWindowSize()
     const [pieceColour, setPieceColour] = useState(1)
     const [timeType, setTimeType] = useState(0)
     const [preTime,setPreTime] = useState({t:30,i:0})
     const [custTime, setCustTime] = useState({t:60,i:15})
     const [isDropdown, setIsDropdown] = useState(false)
-    const [windowSize, setWindowSize] = useState(window.innerWidth)
     const router = useRouter()
     const handleClick=()=>{
         const time = timeType===0 ? preTime.t : custTime.t
         const increment = timeType===0 ? preTime.i : custTime.i
         router.push(`/GamePage?pieceColour=${pieceColour}&time=${time}&increment=${increment}`)
     }
-
-    useEffect(()=>{
-        const handleResize = () => setWindowSize(window.innerWidth)
-        
-        window.addEventListener('resize',handleResize)
-        return ()=> window.removeEventListener('resize',handleResize)
-    },[window.innerWidth])
 
     const getSize = () =>{
         return windowSize<640 ? 30 : windowSize<768 ? 34 : windowSize<1024 ? 40 : windowSize<1128 ? 46 : windowSize<1440 ? 48 : windowSize<1800 ? 52 : 52
