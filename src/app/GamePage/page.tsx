@@ -85,21 +85,6 @@ const GamePage=()=>{
     const [whitePlayerTime, setWhitePlayerTime] = useState(time)
     const [blackPlayerTime, setBlackPlayerTime] = useState(time)
 
-    useEffect(()=>{
-        let timeOutId
-        if((pieceColour===1 && moves%2===0) || (pieceColour===0 && moves%2!==0)){
-            setTimeout(()=>{
-                setWhitePlayerTime((prev)=>prev-1)
-            },1000)
-        }
-        else{
-            setTimeout(()=>{
-                setBlackPlayerTime((prev)=>prev-1)
-            },1000)
-        }
-        return ()=>clearTimeout(timeOutId)
-    },[pieceColour,moves])
-
     const [board,setBoard] = useState(pieceColour===1 ? [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
         ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
