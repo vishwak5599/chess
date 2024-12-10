@@ -362,7 +362,7 @@ const HomePageContent=()=>{
             })
         })
         
-        return allPossibleMovesForWhite.some((piece)=>
+        return moves.some((piece)=>
             piece.moves.some((move)=>
                 move.row===row && move.col===col
             )
