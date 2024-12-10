@@ -9,7 +9,6 @@ export default {
   theme: {
     extend: {
       fontSize: {
-        'xxxs': '0.425rem',
         'xxs': '0.625rem',
       },
       colors: {
@@ -17,9 +16,7 @@ export default {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        "metrim": ["MetrimLetter","sans-serif"],
         "anticDidone": ["AnticDidone","sans-serif"],
-        "astrena": ["Astrena","sans-serif"],
         "technology": ["Technology","sans-serif"]
       },
       screens: {
